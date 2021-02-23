@@ -1,0 +1,27 @@
+#Load FBX
+sceneBuilder.importScene('MonteCarlo_noTextureOrRoughness.fbx')
+
+# Add environment map
+# envMap = EnvMap('LightProbes/20050806-03_hd.hdr')
+# envMap.intensity = 1.0
+# sceneBuilder.envMap = envMap
+
+# Add camera
+camera = Camera()
+camera.position = float3(4.601963, 24.635771, 229.179871)
+camera.target = float3(4.602266, 24.692125, 228.181458)
+camera.up = float3(0, 1, 0)
+camera.focalLength = 21.000000
+sceneBuilder.addCamera(camera)
+
+# Add directional light
+# dirLight = DirectionalLight('Directional light')
+# dirLight.intensity = float3(1.0, 0.77, 0.54)
+# dirLight.direction = float3(0.6245101094245911, -0.7170000076293945, -0.3096744418144226)
+# sceneBuilder.addLight(dirLight)
+
+# Add point light
+pointLight = PointLight('Point light')
+pointLight.intensity = float3(10, 10, 10)
+pointLight.position = float3(2.477976, 104.497108, -1.884592)
+sceneBuilder.addLight(pointLight)
