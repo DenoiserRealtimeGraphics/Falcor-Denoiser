@@ -1,0 +1,31 @@
+#Load FBX
+sceneBuilder.importScene('MyTest_CustomWhite.fbx')
+
+# Add environment map
+# envMap = EnvMap('LightProbes/20050806-03_hd.hdr')
+# envMap.intensity = 1.0
+# sceneBuilder.envMap = envMap
+
+# # Set emmisives
+# m = sceneBuilder.getMaterial('lightCube')
+# m.emissiveFactor = 0.25
+
+# Add camera
+camera = Camera()
+camera.position = float3(297.926697, 40.338703, 0.392017)
+camera.target = float3(296.928345, 40.284847, 0.372900)
+camera.up = float3(0, 1, 0)
+camera.focalLength = 21.000000
+sceneBuilder.addCamera(camera)
+
+# Add directional light
+# dirLight = DirectionalLight('Directional light')
+# dirLight.intensity = float3(1.0, 0.77, 0.54)
+# dirLight.direction = float3(0.6245101094245911, -0.7170000076293945, -0.3096744418144226)
+# sceneBuilder.addLight(dirLight)
+
+# Add point light
+# pointLight = PointLight('Point light')
+# pointLight.intensity = float3(10, 10, 10)
+# pointLight.position = float3(2.477976, 104.497108, -1.884592)
+# sceneBuilder.addLight(pointLight)
