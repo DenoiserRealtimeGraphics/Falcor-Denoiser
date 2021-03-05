@@ -26,6 +26,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
 #pragma once
+
 #include "Falcor.h"
 #include "Utils/Sampling/SampleGenerator.h"
 
@@ -64,4 +65,5 @@ private:
     RtProgramVars::SharedPtr mpVars;
 
     uint mFrameCount = 0;            ///< Frame count since scene was loaded.
+    float4 mBgColor = { 0, 0, 0, 1 };
 };

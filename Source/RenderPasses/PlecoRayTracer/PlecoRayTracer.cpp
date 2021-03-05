@@ -50,7 +50,12 @@ namespace
 
     const ChannelList kOutputChannels =
     {
-        { "color",          "gOutputColor",               "Output color (sum of direct and indirect)"                },
+        { "WorldPosition",          "gWorldPosition",               ""                },
+        { "WorldNormal",          "gWorldFaceNormal",               ""                },
+        { "MaterialDiffuse",          "gMaterialDiffuseOpacity",               ""                },
+        { "MaterialSpecRough",          "gMaterialSpecularRoughness",               ""                },
+        { "MaterialExtraParams",          "gMaterialExtraParams",               ""                },
+        { "Emissive",          "gMaterialEmissive",               ""                },
     };
 }
 
@@ -60,7 +65,7 @@ extern "C" __declspec(dllexport) const char* getProjDir()
     return PROJECT_DIR;
 }
 
-extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary& lib)
+extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary & lib)
 {
     lib.registerClass("PlecoRayTracer", kDesc, PlecoRayTracer::create);
 }
@@ -91,8 +96,72 @@ RenderPassReflection PlecoRayTracer::reflect(const CompileData& compileData)
 
 void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
-    // renderData holds the requested resources
-    // auto& pTexture = renderData["src"]->asTexture();
+    //for (size_t i = 0; i < kOutputChannels.size(); i++)
+    //{
+    //    Texture* pDst = renderData[kOutputChannels[i].name]->asTexture().get();
+    //    if (pDst)
+    //    {
+    //        pRenderContext->clearTexture(pDst);
+    //    }
+    //}
+
+    // get and clear output channels
+    Texture* pWsPos = renderData["WorldPosition"]->asTexture().get();
+    pRenderContext->clearTexture(pWsPos);
+    Texture* pWsNorm = renderData["WorldNormal"]->asTexture().get();
+    pRenderContext->clearTexture(pWsNorm);
+    Texture* pMatDif = renderData["MaterialDiffuse"]->asTexture().get();
+    pRenderContext->clearTexture(pMatDif);
+    Texture* pMatSpec = renderData["MaterialSpecRough"]->asTexture().get();
+    pRenderContext->clearTexture(pMatSpec);
+    Texture* pMatExtra = renderData["MaterialExtraParams"]->asTexture().get();
+    pRenderContext->clearTexture(pMatExtra);
+    //Texture* pMatEmit = renderData["Emissive"]->asTexture().get();
+    //pRenderContext->clearTexture(pMatEmit);
+
+    // TODO: do we need to prepare vars?
+    //if (!mpVars) prepareVars();
+    //assert(mpVars);
+
+    // set miss shader constants
+    const EntryPointGroupVars::SharedPtr missVars = mpVars->getMissVars(0);
+    assert(missVars);
+    missVars["MissShaderCB"]["gBgColor"] = mBgColor;
+    //missVars["gMatDiff"] = pMatDif;
+
+    //// set hit shader group 0 constants
+    //uint32_t hitVarsCount = mpVars->getTotalHitVarsCount();
+    //for(uint32_t i = 0; i < hitVarsCount; i++)
+    //{
+    //    mpVars->getHitVars(i, 0)["gWsPos"] = pWsPos;
+    //    mpVars->getHitVars(i, 0)["gWsNorm"] = pWsNorm;
+    //    mpVars->getHitVars(i, 0)["gMatDif"] = pMatDif;
+    //    mpVars->getHitVars(i, 0)["gMatSpec"] = pMatSpec;
+    //    mpVars->getHitVars(i, 0)["gMatExtra"] = pMatExtra;
+    //}
+
+    // bind output textures (new way?)
+    mpVars["gWorldPosition"] = renderData["WorldPosition"]->asTexture();
+
+    // Bind I/O buffers. These needs to be done per-frame as the buffers may change anytime.
+    //auto bind = [&](const ChannelDesc& desc)
+    //{
+    //    if (!desc.texname.empty())
+    //    {
+    //        auto pGlobalVars = mpVars;
+    //        pGlobalVars[desc.texname] = renderData[desc.name]->asTexture();
+    //    }
+    //};
+    //for (auto channel : kInputChannels) bind(channel);
+    //for (auto channel : kOutputChannels) bind(channel);
+
+    // Get dimensions of ray dispatch. TODO: figure this out
+    const uint2 targetDim = renderData.getDefaultTextureDims();
+    assert(targetDim.x > 0 && targetDim.y > 0);
+
+    // Launch our ray tracing
+    // TODO: wtf is uint3?
+    mpScene->raytrace(pRenderContext, mpProgram.get(), mpVars, uint3(targetDim, 1));
 }
 
 void PlecoRayTracer::renderUI(Gui::Widgets& widget)
