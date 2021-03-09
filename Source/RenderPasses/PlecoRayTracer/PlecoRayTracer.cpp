@@ -25,6 +25,9 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
+
+// http://cwyman.org/code/dxrTutors/tutors/Tutor4/tutorial04.md.html
+
 #include "PlecoRayTracer.h"
 #include "RenderGraph/RenderPassHelpers.h"
 

@@ -6,4 +6,7 @@
   <ItemGroup>
     <ClInclude Include="PlecoRayTracer.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ShaderSource Include="PlecoRayTracer.rt.slang" />
+  </ItemGroup>
 </Project>
