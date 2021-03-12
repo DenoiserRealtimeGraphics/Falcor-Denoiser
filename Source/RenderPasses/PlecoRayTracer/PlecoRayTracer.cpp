@@ -118,14 +118,31 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     mpProgram->addDefines(getValidResourceDefines(kInputChannels, renderData));
     mpProgram->addDefines(getValidResourceDefines(kOutputChannels, renderData));
 
-    // TODO: do we need to prepare vars?
-    //if (!mpVars) prepareVars();
-    //assert(mpVars);
+    // prepare vars
+    if (!mpVars)
+    {
+        assert(mpScene);
+        assert(mpProgram);
+
+        // Configure program.
+        mpProgram->addDefines(mpSampleGenerator->getDefines());
+
+        // Create program variables for the current program/scene.
+        // This may trigger shader compilation. If it fails, throw an exception to abort rendering.
+        mpVars = RtProgramVars::create(mpProgram, mpScene);
+
+        // Bind utility classes into shared data.
+        ShaderVar pGlobalVars = mpVars->getRootVar();
+        bool success = mpSampleGenerator->setShaderData(pGlobalVars);
+        if (!success) throw std::exception("Failed to bind sample generator");
+    }
+    assert(mpVars);
 
     // set miss shader constants
-    const EntryPointGroupVars::SharedPtr missVars = mpVars->getMissVars(0);
-    assert(missVars);
-    missVars["MissShaderCB"]["gBgColor"] = mBgColor;
+    //const EntryPointGroupVars::SharedPtr missVars = mpVars->getMissVars(0);
+    //assert(missVars);
+    //missVars["MissShaderCB"]["gBgColor"] = mBgColor;
+    mpVars["MissShaderCB"]["gBgColor"] = mBgColor;
     //missVars["gMatDiff"] = pMatDif;
 
     // bind input textures
@@ -147,7 +164,6 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     assert(targetDim.x > 0 && targetDim.y > 0);
 
     // Launch our ray tracing
-    // TODO: wtf is uint3?
     mpScene->raytrace(pRenderContext, mpProgram.get(), mpVars, uint3(targetDim, 1));
 }
 

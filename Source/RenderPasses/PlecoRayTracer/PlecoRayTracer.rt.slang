@@ -62,7 +62,7 @@ void Miss(inout SimplePayload payload)
 void AnyHit(inout SimplePayload payload, BuiltInTriangleIntersectionAttributes attributes)
 {
      // Alpha test for non-opaque geometry.
-    VertexData v = getVertexData(hitParams, PrimitiveIndex(), attribs);
+    VertexData v = getVertexData(hitParams, PrimitiveIndex(), attributes);
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
     if (alphaTest(v, gScene.materials[materialID], gScene.materialResources[materialID], 0.f))
     {
@@ -73,21 +73,21 @@ void AnyHit(inout SimplePayload payload, BuiltInTriangleIntersectionAttributes a
 ShadingData getShadingData(uint primId, BuiltInTriangleIntersectionAttributes barys)
 {
     VertexOut vsOut = getVertexAttributes(primId, barys);
-    return prepareShadingData(vsOut, gMaterial, gCamera.posW, 0);
+    return prepareShadingData(vsOut, gMaterial, gScene.camera.posW, 0);
 }
 
 [shader("closesthit")]
-void ClosestHit(inout SimpleRayPayload payload, BuiltInTriangleIntersectionAttributesattributes)
+void ClosestHit(inout SimpleRayPayload payload, BuiltInTriangleIntersectionAttributes attributes)
 {
 	// Which pixel spawned our ray?
     uint2 idx = DispatchRaysIndex();
 
 	// Run helper function to compute important data at the current hit point
-    ShadingData shadeData = getShadingData(PrimitiveIndex(), attribs);
+    ShadingData shadeData = getShadingData(PrimitiveIndex(), attributes);
 
 	// Save out our G-buffer values to the specified output textures
 	gWsPos[idx] = float4(shadeData.posW, 1.f);
-	gWsNorm[idx] = float4(shadeData.N, length(shadeData.posW - gCamera.posW));
+	gWsNorm[idx] = float4(shadeData.N, length(shadeData.posW - gScene.camera.posW));
 	gMatDif[idx] = float4(shadeData.diffuse, shadeData.opacity);
 	gMatSpec[idx] = float4(shadeData.specular, shadeData.linearRoughness);
 	gMatExtra[idx] = float4(shadeData.IoR, 
