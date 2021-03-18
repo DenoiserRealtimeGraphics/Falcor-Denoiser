@@ -40,24 +40,22 @@ namespace
 
     const ChannelList kInputChannels =
     {
-        { "WorldPosition",           "gWorldPosition",             "World-space position (xyz) and foreground flag (w)"       },
-        //{ "normalW",        "gWorldShadingNormal",        "World-space shading normal (xyz)"                         },
-        //{ "tangentW",       "gWorldShadingTangent",       "World-space shading tangent (xyz) and sign (w)", true /* optional */ },
-        { "WorldNormal",    "gWorldFaceNormal",           "Face normal in world space (xyz)",                        },
+        { "iWorldPosition",           "gWorldPosition",             "World-space position (xyz) and foreground flag (w)",  true       },
+        { "iWorldNormal",    "gWorldFaceNormal",           "Face normal in world space (xyz)",      true                  },
         //{ kViewDirInput,    "gWorldView",                 "World-space view direction (xyz)", true /* optional */    },
-        { "MaterialDiffuse", "gMaterialDiffuseOpacity",    "Material diffuse color (xyz) and opacity (w)"             },
-        { "MaterialSpecRough",   "gMaterialSpecularRoughness", "Material specular color (xyz) and roughness (w)"          },
+        { "iMaterialDiffuse", "gMaterialDiffuseOpacity",    "Material diffuse color (xyz) and opacity (w)", true             },
+        { "iMaterialSpecRough",   "gMaterialSpecularRoughness", "Material specular color (xyz) and roughness (w)" , true         },
         //{ "mtlEmissive",    "gMaterialEmissive",          "Material emissive color (xyz)"                            },
-        { "MaterialExtraParams",      "gMaterialExtraParams",       "Material parameters (IoR, flags etc)"                     },
+        { "iMaterialExtraParams",      "gMaterialExtraParams",       "Material parameters (IoR, flags etc)"  , true                   },
     };
 
     const ChannelList kOutputChannels =
     {
-        { "WorldPosition",          "gWsPos",               ""                },
-        { "WorldNormal",          "gWsNorm",               ""                },
-        { "MaterialDiffuse",          "gMatDif",               ""                },
-        { "MaterialSpecRough",          "gMatSpec",               ""                },
-        { "MaterialExtraParams",          "gMatExtra",               ""                },
+        { "oWorldPosition",          "gWsPos",               ""       , true         },
+        { "oWorldNormal",          "gWsNorm",               ""         , true         },
+        { "oMaterialDiffuse",          "gMatDif",               ""       , true           },
+        { "oMaterialSpecRough",          "gMatSpec",               ""      , true            },
+        { "oMaterialExtraParams",          "gMatExtra",               ""     , true             },
         //{ "Emissive",          "gMaterialEmissive",               ""                },
     };
 }
@@ -99,17 +97,23 @@ RenderPassReflection PlecoRayTracer::reflect(const CompileData& compileData)
 
 void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
-    // get and clear output channels
-    Texture::SharedPtr pWsPos = renderData["WorldPosition"]->asTexture();
-    pRenderContext->clearTexture(pWsPos.get());
-    Texture::SharedPtr pWsNorm = renderData["WorldNormal"]->asTexture();
-    pRenderContext->clearTexture(pWsNorm.get());
-    Texture::SharedPtr pMatDif = renderData["MaterialDiffuse"]->asTexture();
-    pRenderContext->clearTexture(pMatDif.get());
-    Texture::SharedPtr pMatSpec = renderData["MaterialSpecRough"]->asTexture();
-    pRenderContext->clearTexture(pMatSpec.get());
-    Texture::SharedPtr pMatExtra = renderData["MaterialExtraParams"]->asTexture();
-    pRenderContext->clearTexture(pMatExtra.get());
+    Texture::SharedPtr pWsPos = renderData["oWorldPosition"]->asTexture();
+    Texture::SharedPtr pWsNorm = renderData["oWorldNormal"]->asTexture();
+    Texture::SharedPtr pMatDif = renderData["oMaterialDiffuse"]->asTexture();
+    Texture::SharedPtr pMatSpec = renderData["oMaterialSpecRough"]->asTexture();
+    Texture::SharedPtr pMatExtra = renderData["oMaterialExtraParams"]->asTexture();
+
+    // if no scene get and clear output channels
+    if (!mpScene)
+    {
+        pRenderContext->clearTexture(pWsPos.get());
+        pRenderContext->clearTexture(pWsNorm.get());
+        pRenderContext->clearTexture(pMatDif.get());
+        pRenderContext->clearTexture(pMatSpec.get());
+        pRenderContext->clearTexture(pMatExtra.get());
+
+        return;
+    }
     //Texture* pMatEmit = renderData["Emissive"]->asTexture().get();
     //pRenderContext->clearTexture(pMatEmit);
 
@@ -146,18 +150,18 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     //missVars["gMatDiff"] = pMatDif;
 
     // bind input textures
-    mpVars["gWorldPosition"] = renderData["WorldPosition"]->asTexture();
-    mpVars["gWorldFaceNormal"] = renderData["WorldNormal"]->asTexture();
-    mpVars["gMaterialDiffuseOpacity"] = renderData["MaterialDiffuse"]->asTexture();
-    mpVars["gMaterialSpecularRoughness"] = renderData["MaterialSpecRough"]->asTexture();
-    mpVars["gMaterialExtraParams"] = renderData["MaterialExtraParams"]->asTexture();
+    mpVars["gWsPos"] = renderData["iWorldPosition"]->asTexture();
+    mpVars["gWsNorm"] = renderData["iWorldNormal"]->asTexture();
+    mpVars["gMatDif"] = renderData["iMaterialDiffuse"]->asTexture();
+    mpVars["gMatSpec"] = renderData["iMaterialSpecRough"]->asTexture();
+    mpVars["gMatExtra"] = renderData["iMaterialExtraParams"]->asTexture();
 
     // bind output textures
-    mpVars["gWsPos"] = pWsPos;
-    mpVars["gWsNorm"] = pWsNorm;
-    mpVars["gMatDif"] = pMatDif;
-    mpVars["gMatSpec"] = pMatSpec;
-    mpVars["gMatExtra"] = pMatExtra;
+    //mpVars["gWsPos"] = pWsPos;
+    //mpVars["gWsNorm"] = pWsNorm;
+    //mpVars["gMatDif"] = pMatDif;
+    //mpVars["gMatSpec"] = pMatSpec;
+    //mpVars["gMatExtra"] = pMatExtra;
 
     // Get dimensions of ray dispatch. TODO: figure this out
     const uint2 targetDim = renderData.getDefaultTextureDims();
