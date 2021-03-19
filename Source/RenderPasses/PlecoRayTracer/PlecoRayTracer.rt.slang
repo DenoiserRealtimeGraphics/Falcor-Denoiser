@@ -10,6 +10,13 @@ import Utils.Sampling.SampleGenerator;
 import Experimental.Scene.Material.MaterialShading;
 import Experimental.Scene.Lights.LightHelpers;
 
+Texture2D<float4> gWorldPosition;
+Texture2D<float4> gWorldFaceNormal;
+Texture2D<float4> gMaterialDiffuseOpacity;
+Texture2D<float4> gMaterialSpecularRoughness;
+Texture2D<float4> gMaterialEmissive;
+Texture2D<float4> gMaterialExtraParams;
+
 // A dummy payload for this simple ray; never used
 struct SimplePayload
 {

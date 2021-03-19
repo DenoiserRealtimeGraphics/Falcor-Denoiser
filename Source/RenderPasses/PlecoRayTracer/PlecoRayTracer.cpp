@@ -151,12 +151,12 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     mpVars["MissShaderCB"]["gBgColor"] = mBgColor;
     //missVars["gMatDiff"] = pMatDif;
 
-    //// bind input textures TODO: gWorldPosition not found, but not necessary anyways?
-    //mpVars["gWorldPosition"] = renderData["iWorldPosition"]->asTexture();
-    //mpVars["gWorldFaceNormal"] = renderData["iWorldNormal"]->asTexture();
-    //mpVars["gMaterialDiffuseOpacity"] = renderData["iMaterialDiffuse"]->asTexture();
-    //mpVars["gMaterialSpecularRoughness"] = renderData["iMaterialSpecRough"]->asTexture();
-    //mpVars["gMaterialExtraParams"] = renderData["iMaterialExtraParams"]->asTexture();
+    // bind input textures
+    mpVars["gWorldPosition"] = renderData["iWorldPosition"]->asTexture();
+    mpVars["gWorldFaceNormal"] = renderData["iWorldNormal"]->asTexture();
+    mpVars["gMaterialDiffuseOpacity"] = renderData["iMaterialDiffuse"]->asTexture();
+    mpVars["gMaterialSpecularRoughness"] = renderData["iMaterialSpecRough"]->asTexture();
+    mpVars["gMaterialExtraParams"] = renderData["iMaterialExtraParams"]->asTexture();
 
     // bind output textures
     mpVars["gWsPos"] = pWsPos;
