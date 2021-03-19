@@ -50,7 +50,7 @@ cbuffer MissShaderCB
 // The output textures.  See bindings in C++ code.
 //     -> gMatDif is visible in the miss shader
 //     -> All textures are visible in the hit shaders
-RWTexture2D<float4> gWsPos, gWsNorm, gMatDif, gMatSpec, gMatExtra;
+RWTexture2D<float4> gWsPos, gWsNorm, gMatDif, gMatSpec, gMatExtra, gColor;
 
 [shader("miss")]
 void Miss(inout SimplePayload payload)
@@ -92,4 +92,5 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
 	gMatExtra[idx] = float4(shadeData.IoR, 
                             shadeData.doubleSided ? 1.f : 0.f, 
                             0.f, 0.f);
+    gColor[idx] = float4(1.0f,0.0f,1.0f,1.0f);
 }

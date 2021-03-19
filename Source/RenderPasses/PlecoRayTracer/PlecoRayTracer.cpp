@@ -56,6 +56,7 @@ namespace
         { "oMaterialDiffuse",          "gMatDif",               ""                },
         { "oMaterialSpecRough",          "gMatSpec",               ""                },
         { "oMaterialExtraParams",          "gMatExtra",               ""                },
+        { "oColor",          "gColor",               ""                },
         //{ "Emissive",          "gMaterialEmissive",               ""                },
     };
 }
@@ -108,6 +109,9 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     pRenderContext->clearTexture(pMatSpec.get());
     Texture::SharedPtr pMatExtra = renderData["oMaterialExtraParams"]->asTexture();
     pRenderContext->clearTexture(pMatExtra.get());
+
+    Texture::SharedPtr pColor = renderData["oColor"]->asTexture();
+    pRenderContext->clearTexture(pColor.get());
     //Texture* pMatEmit = renderData["Emissive"]->asTexture().get();
     //pRenderContext->clearTexture(pMatEmit);
 
@@ -156,6 +160,7 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     mpVars["gMatDif"] = pMatDif;
     mpVars["gMatSpec"] = pMatSpec;
     mpVars["gMatExtra"] = pMatExtra;
+    mpVars["gColor"] = pColor;
 
     // Get dimensions of ray dispatch. TODO: figure this out
     const uint2 targetDim = renderData.getDefaultTextureDims();
