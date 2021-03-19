@@ -50,7 +50,11 @@ cbuffer MissShaderCB
 // The output textures.  See bindings in C++ code.
 //     -> gMatDif is visible in the miss shader
 //     -> All textures are visible in the hit shaders
-RWTexture2D<float4> gWsPos, gWsNorm, gMatDif, gMatSpec, gMatExtra, gColor;
+RWTexture2D<float4> gWsPos, gWsNorm, gMatDif, gMatSpec, gMatExtra, gMatEmis, gColor;
+
+#define isValid(name) (is_valid_##name != 0)
+static const bool kUseEmissiveLights = USE_EMISSIVE_LIGHTS;
+
 
 [shader("miss")]
 void Miss(inout SimplePayload payload)
@@ -84,6 +88,20 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
     ShadingData shadeData = prepareShadingData(v, materialID, gScene.materials[materialID], gScene.materialResources[materialID], -WorldRayDirection(), 0.f);
 
+    //float3 reflectCol = getReflectionColor(posW, v, rayDirW, shadeData.depth.r);
+
+    //if(checkLightHit(posW) == false)
+    //{
+        
+    //}
+
+    float3 col = float3(0.0f,0.0f,0.0f);
+
+    col += (shadeData.specular + shadeData.diffuse);
+
+    gColor[idx] = float4(col,1.0f);
+
+
 	// Save out our G-buffer values to the specified output textures
 	gWsPos[idx] = float4(shadeData.posW, 1.f);
 	gWsNorm[idx] = float4(shadeData.N, length(shadeData.posW - gScene.camera.data.posW));
@@ -92,5 +110,5 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
 	gMatExtra[idx] = float4(shadeData.IoR, 
                             shadeData.doubleSided ? 1.f : 0.f, 
                             0.f, 0.f);
-    gColor[idx] = float4(1.0f,0.0f,1.0f,1.0f);
+    gMatEmis[idx] = float4(shadeData.emissive, 1.0f);
 }

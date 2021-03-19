@@ -45,7 +45,7 @@ namespace
         //{ kViewDirInput,    "gWorldView",                 "World-space view direction (xyz)", true /* optional */    },
         { "iMaterialDiffuse", "gMaterialDiffuseOpacity",    "Material diffuse color (xyz) and opacity (w)"             },
         { "iMaterialSpecRough",   "gMaterialSpecularRoughness", "Material specular color (xyz) and roughness (w)"          },
-        //{ "mtlEmissive",    "gMaterialEmissive",          "Material emissive color (xyz)"                            },
+        { "iMaterialEmissive",    "gMaterialEmissive",          "Material emissive color (xyz)"                            },
         { "iMaterialExtraParams",      "gMaterialExtraParams",       "Material parameters (IoR, flags etc)"                     },
     };
 
@@ -56,8 +56,8 @@ namespace
         { "oMaterialDiffuse",          "gMatDif",               ""                },
         { "oMaterialSpecRough",          "gMatSpec",               ""                },
         { "oMaterialExtraParams",          "gMatExtra",               ""                },
+        { "oMaterialEmissive",          "gMatEmis",               ""                },
         { "oColor",          "gColor",               ""                },
-        //{ "Emissive",          "gMaterialEmissive",               ""                },
     };
 }
 
@@ -109,6 +109,8 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     pRenderContext->clearTexture(pMatSpec.get());
     Texture::SharedPtr pMatExtra = renderData["oMaterialExtraParams"]->asTexture();
     pRenderContext->clearTexture(pMatExtra.get());
+    Texture::SharedPtr pMatEmis = renderData["oMaterialEmissive"]->asTexture();
+    pRenderContext->clearTexture(pMatEmis.get());
 
     Texture::SharedPtr pColor = renderData["oColor"]->asTexture();
     pRenderContext->clearTexture(pColor.get());
@@ -119,6 +121,8 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     // TODO: This should be moved to a more general mechanism using Slang.
     mpProgram->addDefines(getValidResourceDefines(kInputChannels, renderData));
     mpProgram->addDefines(getValidResourceDefines(kOutputChannels, renderData));
+    mpProgram->addDefine("USE_EMISSIVE_LIGHTS", mpScene->useEmissiveLights() ? "1" : "0");   //access emissive lights in the scene
+
 
     // prepare vars
     if (!mpVars)
@@ -160,6 +164,7 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     mpVars["gMatDif"] = pMatDif;
     mpVars["gMatSpec"] = pMatSpec;
     mpVars["gMatExtra"] = pMatExtra;
+    mpVars["gMatEmis"] = pMatEmis;
     mpVars["gColor"] = pColor;
 
     // Get dimensions of ray dispatch. TODO: figure this out

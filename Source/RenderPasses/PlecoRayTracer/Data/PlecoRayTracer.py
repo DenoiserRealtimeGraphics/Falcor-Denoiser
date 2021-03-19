@@ -35,6 +35,7 @@ def render_graph_DefaultRenderGraph():
     g.addEdge('GBufferRT.normW', 'PlecoRayTracer.iWorldNormal')
     g.addEdge('GBufferRT.diffuseOpacity', 'PlecoRayTracer.iMaterialDiffuse')
     g.addEdge('GBufferRT.specRough', 'PlecoRayTracer.iMaterialSpecRough')
+    g.addEdge('GBufferRT.emissive', 'PlecoRayTracer.iMaterialEmissive')
     g.addEdge('GBufferRT.matlExtra', 'PlecoRayTracer.iMaterialExtraParams')
     g.markOutput('PlecoRayTracer.oColor')
     return g
