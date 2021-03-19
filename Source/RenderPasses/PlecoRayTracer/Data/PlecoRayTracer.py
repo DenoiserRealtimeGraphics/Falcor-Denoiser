@@ -31,12 +31,12 @@ def render_graph_DefaultRenderGraph():
     g.addPass(GBufferRT, 'GBufferRT')
     PlecoRayTracer = createPass('PlecoRayTracer')
     g.addPass(PlecoRayTracer, 'PlecoRayTracer')
-    g.addEdge('GBufferRT.posW', 'PlecoRayTracer.WorldPosition')
-    g.addEdge('GBufferRT.normW', 'PlecoRayTracer.WorldNormal')
-    g.addEdge('GBufferRT.diffuseOpacity', 'PlecoRayTracer.MaterialDiffuse')
-    g.addEdge('GBufferRT.specRough', 'PlecoRayTracer.MaterialSpecRough')
-    g.addEdge('GBufferRT.matlExtra', 'PlecoRayTracer.MaterialExtraParams')
-    g.markOutput('PlecoRayTracer.WorldPosition')
+    g.addEdge('GBufferRT.posW', 'PlecoRayTracer.iWorldPosition')
+    g.addEdge('GBufferRT.normW', 'PlecoRayTracer.iWorldNormal')
+    g.addEdge('GBufferRT.diffuseOpacity', 'PlecoRayTracer.iMaterialDiffuse')
+    g.addEdge('GBufferRT.specRough', 'PlecoRayTracer.iMaterialSpecRough')
+    g.addEdge('GBufferRT.matlExtra', 'PlecoRayTracer.iMaterialExtraParams')
+    g.markOutput('PlecoRayTracer.oWorldPosition')
     return g
 
 DefaultRenderGraph = render_graph_DefaultRenderGraph()

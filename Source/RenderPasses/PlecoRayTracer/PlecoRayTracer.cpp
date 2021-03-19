@@ -36,28 +36,26 @@ namespace
 {
     const char kDesc[] = "Insert pass description here";
 
-    const char kViewDirInput[] = "viewW";
-
     const ChannelList kInputChannels =
     {
-        { "WorldPosition",           "gWorldPosition",             "World-space position (xyz) and foreground flag (w)"       },
+        { "iWorldPosition",           "gWorldPosition",             "World-space position (xyz) and foreground flag (w)"       },
         //{ "normalW",        "gWorldShadingNormal",        "World-space shading normal (xyz)"                         },
         //{ "tangentW",       "gWorldShadingTangent",       "World-space shading tangent (xyz) and sign (w)", true /* optional */ },
-        { "WorldNormal",    "gWorldFaceNormal",           "Face normal in world space (xyz)",                        },
+        { "iWorldNormal",    "gWorldFaceNormal",           "Face normal in world space (xyz)",                        },
         //{ kViewDirInput,    "gWorldView",                 "World-space view direction (xyz)", true /* optional */    },
-        { "MaterialDiffuse", "gMaterialDiffuseOpacity",    "Material diffuse color (xyz) and opacity (w)"             },
-        { "MaterialSpecRough",   "gMaterialSpecularRoughness", "Material specular color (xyz) and roughness (w)"          },
+        { "iMaterialDiffuse", "gMaterialDiffuseOpacity",    "Material diffuse color (xyz) and opacity (w)"             },
+        { "iMaterialSpecRough",   "gMaterialSpecularRoughness", "Material specular color (xyz) and roughness (w)"          },
         //{ "mtlEmissive",    "gMaterialEmissive",          "Material emissive color (xyz)"                            },
-        { "MaterialExtraParams",      "gMaterialExtraParams",       "Material parameters (IoR, flags etc)"                     },
+        { "iMaterialExtraParams",      "gMaterialExtraParams",       "Material parameters (IoR, flags etc)"                     },
     };
 
     const ChannelList kOutputChannels =
     {
-        { "WorldPosition",          "gWsPos",               ""                },
-        { "WorldNormal",          "gWsNorm",               ""                },
-        { "MaterialDiffuse",          "gMatDif",               ""                },
-        { "MaterialSpecRough",          "gMatSpec",               ""                },
-        { "MaterialExtraParams",          "gMatExtra",               ""                },
+        { "oWorldPosition",          "gWsPos",               ""                },
+        { "oWorldNormal",          "gWsNorm",               ""                },
+        { "oMaterialDiffuse",          "gMatDif",               ""                },
+        { "oMaterialSpecRough",          "gMatSpec",               ""                },
+        { "oMaterialExtraParams",          "gMatExtra",               ""                },
         //{ "Emissive",          "gMaterialEmissive",               ""                },
     };
 }
@@ -83,7 +81,7 @@ std::string PlecoRayTracer::getDesc() { return kDesc; }
 
 Dictionary PlecoRayTracer::getScriptingDictionary()
 {
-    return Dictionary();
+    return Dictionary{};
 }
 
 RenderPassReflection PlecoRayTracer::reflect(const CompileData& compileData)
@@ -100,15 +98,15 @@ RenderPassReflection PlecoRayTracer::reflect(const CompileData& compileData)
 void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
     // get and clear output channels
-    Texture::SharedPtr pWsPos = renderData["WorldPosition"]->asTexture();
+    Texture::SharedPtr pWsPos = renderData["oWorldPosition"]->asTexture();
     pRenderContext->clearTexture(pWsPos.get());
-    Texture::SharedPtr pWsNorm = renderData["WorldNormal"]->asTexture();
+    Texture::SharedPtr pWsNorm = renderData["oWorldNormal"]->asTexture();
     pRenderContext->clearTexture(pWsNorm.get());
-    Texture::SharedPtr pMatDif = renderData["MaterialDiffuse"]->asTexture();
+    Texture::SharedPtr pMatDif = renderData["oMaterialDiffuse"]->asTexture();
     pRenderContext->clearTexture(pMatDif.get());
-    Texture::SharedPtr pMatSpec = renderData["MaterialSpecRough"]->asTexture();
+    Texture::SharedPtr pMatSpec = renderData["oMaterialSpecRough"]->asTexture();
     pRenderContext->clearTexture(pMatSpec.get());
-    Texture::SharedPtr pMatExtra = renderData["MaterialExtraParams"]->asTexture();
+    Texture::SharedPtr pMatExtra = renderData["oMaterialExtraParams"]->asTexture();
     pRenderContext->clearTexture(pMatExtra.get());
     //Texture* pMatEmit = renderData["Emissive"]->asTexture().get();
     //pRenderContext->clearTexture(pMatEmit);
@@ -145,12 +143,12 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     mpVars["MissShaderCB"]["gBgColor"] = mBgColor;
     //missVars["gMatDiff"] = pMatDif;
 
-    // bind input textures
-    mpVars["gWorldPosition"] = renderData["WorldPosition"]->asTexture();
-    mpVars["gWorldFaceNormal"] = renderData["WorldNormal"]->asTexture();
-    mpVars["gMaterialDiffuseOpacity"] = renderData["MaterialDiffuse"]->asTexture();
-    mpVars["gMaterialSpecularRoughness"] = renderData["MaterialSpecRough"]->asTexture();
-    mpVars["gMaterialExtraParams"] = renderData["MaterialExtraParams"]->asTexture();
+    //// bind input textures TODO: gWorldPosition not found, but not necessary anyways?
+    //mpVars["gWorldPosition"] = renderData["iWorldPosition"]->asTexture();
+    //mpVars["gWorldFaceNormal"] = renderData["iWorldNormal"]->asTexture();
+    //mpVars["gMaterialDiffuseOpacity"] = renderData["iMaterialDiffuse"]->asTexture();
+    //mpVars["gMaterialSpecularRoughness"] = renderData["iMaterialSpecRough"]->asTexture();
+    //mpVars["gMaterialExtraParams"] = renderData["iMaterialExtraParams"]->asTexture();
 
     // bind output textures
     mpVars["gWsPos"] = pWsPos;
