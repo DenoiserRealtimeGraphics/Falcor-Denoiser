@@ -150,18 +150,18 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     //missVars["gMatDiff"] = pMatDif;
 
     // bind input textures
-    mpVars["gWsPos"] = renderData["iWorldPosition"]->asTexture();
-    mpVars["gWsNorm"] = renderData["iWorldNormal"]->asTexture();
-    mpVars["gMatDif"] = renderData["iMaterialDiffuse"]->asTexture();
-    mpVars["gMatSpec"] = renderData["iMaterialSpecRough"]->asTexture();
-    mpVars["gMatExtra"] = renderData["iMaterialExtraParams"]->asTexture();
+    //mpVars["gWsPos"] = renderData["iWorldPosition"]->asTexture();
+    //mpVars["gWsNorm"] = renderData["iWorldNormal"]->asTexture();
+    //mpVars["gMatDif"] = renderData["iMaterialDiffuse"]->asTexture();
+    //mpVars["gMatSpec"] = renderData["iMaterialSpecRough"]->asTexture();
+    //mpVars["gMatExtra"] = renderData["iMaterialExtraParams"]->asTexture();
 
     // bind output textures
-    //mpVars["gWsPos"] = pWsPos;
-    //mpVars["gWsNorm"] = pWsNorm;
-    //mpVars["gMatDif"] = pMatDif;
-    //mpVars["gMatSpec"] = pMatSpec;
-    //mpVars["gMatExtra"] = pMatExtra;
+    mpVars["gWsPos"] = pWsPos;
+    mpVars["gWsNorm"] = pWsNorm;
+    mpVars["gMatDif"] = pMatDif;
+    mpVars["gMatSpec"] = pMatSpec;
+    mpVars["gMatExtra"] = pMatExtra;
 
     // Get dimensions of ray dispatch. TODO: figure this out
     const uint2 targetDim = renderData.getDefaultTextureDims();

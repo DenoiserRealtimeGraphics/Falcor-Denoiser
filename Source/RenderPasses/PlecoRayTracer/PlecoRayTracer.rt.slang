@@ -56,6 +56,7 @@ RWTexture2D<float4> gWsPos, gWsNorm, gMatDif, gMatSpec, gMatExtra;
 void Miss(inout SimplePayload payload)
 {
     gMatDif[DispatchRaysIndex().xy] = float4(gBgColor, 1.0f);
+    //gMatDif[DispatchRaysIndex().xy] = float4(0.0f,1.0f,0.0f, 1.0f);
 }
 
 
@@ -85,7 +86,11 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     ShadingData shadeData = prepareShadingData(v, materialID, gScene.materials[materialID], gScene.materialResources[materialID], -WorldRayDirection(), 0.f);
 
 	// Save out our G-buffer values to the specified output textures
-	gWsPos[idx] = float4(shadeData.posW, 1.f);
+
+    gWsPos[idx] = float4(shadeData.posW, 1.f);
+    //gWsPos[idx] = float4(1.0f,0.0f,1.0f, 1.f);
+
+
 	gWsNorm[idx] = float4(shadeData.N, length(shadeData.posW - gScene.camera.data.posW));
 	gMatDif[idx] = float4(shadeData.diffuse, shadeData.opacity);
 	gMatSpec[idx] = float4(shadeData.specular, shadeData.linearRoughness);
