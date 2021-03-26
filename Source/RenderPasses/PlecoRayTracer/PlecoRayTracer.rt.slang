@@ -17,10 +17,35 @@ Texture2D<float4> gMaterialSpecularRoughness;
 Texture2D<float4> gMaterialEmissive;
 Texture2D<float4> gMaterialExtraParams;
 
-// A dummy payload for this simple ray; never used
 struct SimplePayload
 {
-    bool dummyValue;
+    float3 color;
+    bool terminated;
+    float3 _pad0;
+    uint numBounces;
+    float3 origin;
+    uint _pad1;
+    float3 direction;
+    uint _pad2;
+
+    SampleGenerator sampleGen;
+
+    static SimplePayload create(SampleGenerator sg)
+    {
+        SimplePayload payload;
+        payload.terminated = false;
+        payload.numBounces = 0;
+        payload.origin = float3(0, 0, 0);
+        payload.direction = float3(0, 0, 0);
+        payload.color = float3(0, 0, 0);
+        payload.sampleGen = sg;
+        return payload;
+    }
+};
+
+cbuffer OurDataCB
+{
+    int gFrameCount;
 };
 
 [shader("raygeneration")]
@@ -38,25 +63,35 @@ void RayGen()
                                ndc.y * gScene.camera.data.cameraV +
                                        gScene.camera.data.cameraW);
 
+    //Create sample generator.
+    SampleGenerator sg = SampleGenerator.create(dispatchRaysIndex, gFrameCount);
+    
     // Initialize a ray structure for our ray tracer
-    RayDesc ray = { gScene.camera.data.posW, 0.0f, rayDir, 1e+38f };
-
+    RayDesc ray;
+    ray.TMin = 0.0f;
+    ray.TMax = 1e+38f;
+    
 	// Initialize our ray payload (a per-ray, user-definable structure).
-    SimplePayload payload = { false };
+    SimplePayload payload = SimplePayload.create(sg);
+    payload.origin = gScene.camera.data.posW;
+    payload.direction = rayDir;
 
     // Trace our ray
-    TraceRay(gRtScene, RAY_FLAG_NONE, 0xFF, 0, 1, 0, ray, payload);
+    uint maxBounces = 3;
+    for (uint i = 0; i < maxBounces && !payload.terminated; i++)
+    {
+        ray.Origin = payload.origin;
+        ray.Direction = payload.direction;
+        TraceRay(gRtScene, RAY_FLAG_NONE, 0xFF, 0, 1, 0, ray, payload);
+    }
+
+    //gColor[dispatchRaysIndex] = float4(payload.color, 1.0f);
 }
 
 // Our miss shader's variables
 cbuffer MissShaderCB
 {
     float3 gBgColor;
-};
-
-cbuffer OurDataCB
-{
-    int gFrameCount;
 };
 
 // The output textures.  See bindings in C++ code.
@@ -67,14 +102,12 @@ RWTexture2D<float4> gWsPos, gWsNorm, gMatDif, gMatSpec, gMatExtra, gMatEmis, gCo
 #define isValid(name) (is_valid_##name != 0)
 static const bool kUseEmissiveLights = USE_EMISSIVE_LIGHTS;
 
-
 [shader("miss")]
 void Miss(inout SimplePayload payload)
 {
     gMatDif[DispatchRaysIndex().xy] = float4(gBgColor, 1.0f);
+    payload.terminated = true;
 }
-
-
 
 [shader("anyhit")]
 void AnyHit(uniform HitShaderParams hitParams, inout SimplePayload payload, BuiltInTriangleIntersectionAttributes attributes : SV_IntersectionAttributes)
@@ -111,7 +144,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
 
     col += (shadeData.specular + shadeData.diffuse);
 
-    gColor[idx] = float4(col,1.0f);
+    //gColor[idx] = float4(col,1.0f);
 
 
 	// Save out our G-buffer values to the specified output textures
@@ -123,4 +156,18 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
                             shadeData.doubleSided ? 1.f : 0.f, 
                             0.f, 0.f);
     gMatEmis[idx] = float4(shadeData.emissive, 1.0f);
+
+    payload.color += shadeData.diffuse;
+    
+    // new origin
+    payload.origin = shadeData.computeNewRayOrigin();
+    // Generate scatter ray as cosine-weighted direction over the hemisphere.
+    //float pdf = 0.f;
+    //float2 u = sampleNext2D(payload.sg);
+    //float3 wi = sample_cosine_hemisphere_concentric(u, pdf);
+    //wi = fromLocal(wi, shadeData);
+    //payload.direction = wi;
+    
+    payload.numBounces++;
 }
+
