@@ -149,6 +149,7 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     //assert(missVars);
     //missVars["MissShaderCB"]["gBgColor"] = mBgColor;
     mpVars["MissShaderCB"]["gBgColor"] = mBgColor;
+    mpVars["OurDataCB"]["gFrameCount"] = mFrameCount;
     //missVars["gMatDiff"] = pMatDif;
 
     // bind input textures
@@ -173,6 +174,8 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
 
     // Launch our ray tracing
     mpScene->raytrace(pRenderContext, mpProgram.get(), mpVars, uint3(targetDim, 1));
+
+    ++mFrameCount;
 }
 
 void PlecoRayTracer::renderUI(Gui::Widgets& widget)

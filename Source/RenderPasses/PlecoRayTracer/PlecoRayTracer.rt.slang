@@ -54,6 +54,11 @@ cbuffer MissShaderCB
     float3 gBgColor;
 };
 
+cbuffer OurDataCB
+{
+    int gFrameCount;
+};
+
 // The output textures.  See bindings in C++ code.
 //     -> gMatDif is visible in the miss shader
 //     -> All textures are visible in the hit shaders
