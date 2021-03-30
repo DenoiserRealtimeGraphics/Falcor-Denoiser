@@ -10,6 +10,11 @@ import Utils.Sampling.SampleGenerator;
 import Experimental.Scene.Material.MaterialShading;
 import Experimental.Scene.Lights.LightHelpers;
 
+cbuffer OurDataCB
+{
+    uint gFrameCount;
+};
+
 Texture2D<float4> gWorldPosition;
 Texture2D<float4> gWorldFaceNormal;
 Texture2D<float4> gMaterialDiffuseOpacity;
@@ -21,31 +26,23 @@ struct SimplePayload
 {
     float3 color;
     bool terminated;
-    float3 _pad0;
-    uint numBounces;
     float3 origin;
-    uint _pad1;
     float3 direction;
-    uint _pad2;
+    //uint numBounces;
 
     SampleGenerator sampleGen;
 
     static SimplePayload create(SampleGenerator sg)
     {
         SimplePayload payload;
+        payload.color = float3(0, 0, 0);
         payload.terminated = false;
-        payload.numBounces = 0;
         payload.origin = float3(0, 0, 0);
         payload.direction = float3(0, 0, 0);
-        payload.color = float3(0, 0, 0);
+        //payload.numBounces = 0;
         payload.sampleGen = sg;
         return payload;
     }
-};
-
-cbuffer OurDataCB
-{
-    int gFrameCount;
 };
 
 [shader("raygeneration")]
@@ -82,10 +79,10 @@ void RayGen()
     {
         ray.Origin = payload.origin;
         ray.Direction = payload.direction;
-        TraceRay(gRtScene, RAY_FLAG_NONE, 0xFF, 0, 1, 0, ray, payload);
+        TraceRay(gRtScene, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF, 0, 1, 0, ray, payload);
     }
 
-    //gColor[dispatchRaysIndex] = float4(payload.color, 1.0f);
+    gColor[dispatchRaysIndex] = float4(payload.color, 1.0f);
 }
 
 // Our miss shader's variables
@@ -110,7 +107,7 @@ void Miss(inout SimplePayload payload)
 }
 
 [shader("anyhit")]
-void AnyHit(uniform HitShaderParams hitParams, inout SimplePayload payload, BuiltInTriangleIntersectionAttributes attributes : SV_IntersectionAttributes)
+void AnyHit(uniform HitShaderParams hitParams, inout SimplePayload payload, BuiltInTriangleIntersectionAttributes attributes)
 {
      // Alpha test for non-opaque geometry.
     VertexData v = getVertexData(hitParams, PrimitiveIndex(), attributes);
@@ -122,7 +119,7 @@ void AnyHit(uniform HitShaderParams hitParams, inout SimplePayload payload, Buil
 }
 
 [shader("closesthit")]
-void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, BuiltInTriangleIntersectionAttributes attributes : SV_IntersectionAttributes)
+void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, BuiltInTriangleIntersectionAttributes attributes)
 {
 	// Which pixel spawned our ray?
     uint2 idx = DispatchRaysIndex().xy;
@@ -162,12 +159,12 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     // new origin
     payload.origin = shadeData.computeNewRayOrigin();
     // Generate scatter ray as cosine-weighted direction over the hemisphere.
-    //float pdf = 0.f;
-    //float2 u = sampleNext2D(payload.sg);
-    //float3 wi = sample_cosine_hemisphere_concentric(u, pdf);
-    //wi = fromLocal(wi, shadeData);
-    //payload.direction = wi;
+    float pdf = 0.f;
+    float2 u = sampleNext2D(payload.sampleGen);
+    float3 wi = sample_cosine_hemisphere_concentric(u, pdf);
+    wi = fromLocal(wi, shadeData);
+    payload.direction = wi;
     
-    payload.numBounces++;
+    //payload.numBounces++;
 }
 
