@@ -112,10 +112,23 @@ void AnyHit(uniform HitShaderParams hitParams, inout SimplePayload payload, Buil
      // Alpha test for non-opaque geometry.
     VertexData v = getVertexData(hitParams, PrimitiveIndex(), attributes);
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
-    if (alphaTest(v, gScene.materials[materialID], gScene.materialResources[materialID], 0.f))
+
+    //ExplicitLodTextureSampler lodSampler = { 0 }; // Specify the tex lod/mip to use here
+    //float4 baseColor = sampleTexture(gScene.materialResources[materialID].baseColor, gScene.materialResources[materialID].samplerState,
+	//	v.texC, gScene.materials[materialID].baseColor, 1, lodSampler);
+
+ //   bool test = (baseColor.a < gScene.materials[materialID].alphaThreshold);
+    bool test = false;
+    //if (alphaTest(v, gScene.materials[materialID], gScene.materialResources[materialID], 0.f))
+    //{
+    //    IgnoreHit();
+    //}
+
+    if (test)
     {
         IgnoreHit();
     }
+
 }
 
 [shader("closesthit")]
@@ -139,7 +152,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
 
     float3 col = float3(0.0f,0.0f,0.0f);
 
-    col += (shadeData.specular + shadeData.diffuse);
+    col += (shadeData.specular + shadeData.diffuse) * shadeData.emissive;
 
     //gColor[idx] = float4(col,1.0f);
 

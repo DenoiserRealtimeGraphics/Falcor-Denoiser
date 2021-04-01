@@ -144,6 +144,12 @@ void PlecoRayTracer::execute(RenderContext* pRenderContext, const RenderData& re
     }
     assert(mpVars);
 
+    // Request the light collection if emissive lights are enabled.
+    if (mpScene->getRenderSettings().useEmissiveLights)
+    {
+        mpScene->getLightCollection(pRenderContext);
+    }
+
     // set miss shader constants
     //const EntryPointGroupVars::SharedPtr missVars = mpVars->getMissVars(0);
     //assert(missVars);
