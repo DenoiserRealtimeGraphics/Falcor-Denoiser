@@ -28,7 +28,7 @@ struct SimplePayload
     bool terminated;
     float3 origin;
     float3 direction;
-    //uint numBounces;
+    uint numBounces;
 
     SampleGenerator sampleGen;
 
@@ -39,7 +39,7 @@ struct SimplePayload
         payload.terminated = false;
         payload.origin = float3(0, 0, 0);
         payload.direction = float3(0, 0, 0);
-        //payload.numBounces = 0;
+        payload.numBounces = 0;
         payload.sampleGen = sg;
         return payload;
     }
@@ -79,7 +79,7 @@ void RayGen()
     {
         ray.Origin = payload.origin;
         ray.Direction = payload.direction;
-        TraceRay(gRtScene, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF, 0, 1, 0, ray, payload);
+        TraceRay(gRtScene, 0, 0xFF, 0, 1, 0, ray, payload);
     }
 
     gColor[dispatchRaysIndex] = float4(payload.color, 1.0f);
@@ -178,6 +178,6 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     wi = fromLocal(wi, shadeData);
     payload.direction = wi;
     
-    //payload.numBounces++;
+    payload.numBounces++;
 }
 

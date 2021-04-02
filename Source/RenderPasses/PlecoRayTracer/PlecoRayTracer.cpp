@@ -35,6 +35,7 @@
 namespace
 {
     const char kDesc[] = "Insert pass description here";
+    const uint32_t kMaxPayloadSizeBytes = 80u;
 
     const ChannelList kInputChannels =
     {
@@ -209,7 +210,7 @@ PlecoRayTracer::PlecoRayTracer(const Dictionary& dict)
     progDesc.setRayGen("RayGen");
     progDesc.addHitGroup(0, "ClosestHit", "AnyHit");
     progDesc.addMiss(0, "Miss");
-    mpProgram = RtProgram::create(progDesc);
+    mpProgram = RtProgram::create(progDesc, kMaxPayloadSizeBytes);
 
     // Create a sample generator.
     mpSampleGenerator = SampleGenerator::create(SAMPLE_GENERATOR_UNIFORM);
