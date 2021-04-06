@@ -29,6 +29,7 @@ struct SimplePayload
     float3 origin;
     float3 direction;
     uint numBounces;
+    float throughput;
 
     SampleGenerator sampleGen;
 
@@ -40,6 +41,7 @@ struct SimplePayload
         payload.origin = float3(0, 0, 0);
         payload.direction = float3(0, 0, 0);
         payload.numBounces = 0;
+        payload.throughput = 1.0f;
         payload.sampleGen = sg;
         return payload;
     }
@@ -102,8 +104,21 @@ static const bool kUseEmissiveLights = USE_EMISSIVE_LIGHTS;
 [shader("miss")]
 void Miss(inout SimplePayload payload)
 {
-    gMatDif[DispatchRaysIndex().xy] = float4(gBgColor, 1.0f);
+    //gMatDif[DispatchRaysIndex().xy] = float4(gBgColor, 1.0f);
     payload.terminated = true;
+
+    
+    // Add contribution from env map in this direction.
+    if (payload.numBounces > 0)
+    {
+        float3 envMap = gScene.envMap.eval(payload.direction);
+        payload.color += payload.color * envMap * payload.throughput;
+    }
+    // Draw env map background
+    else
+    {
+        payload.color = gScene.envMap.eval(payload.direction);
+    }
 }
 
 [shader("anyhit")]
@@ -143,31 +158,30 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
     ShadingData shadeData = prepareShadingData(v, materialID, gScene.materials[materialID], gScene.materialResources[materialID], -WorldRayDirection(), 0.f);
 
-    //float3 reflectCol = getReflectionColor(posW, v, rayDirW, shadeData.depth.r);
-
     //if(checkLightHit(posW) == false)
     //{
-        
     //}
 
-    float3 col = float3(0.0f,0.0f,0.0f);
-
-    col += (shadeData.specular + shadeData.diffuse) * shadeData.emissive;
-
-    //gColor[idx] = float4(col,1.0f);
-
-
 	// Save out our G-buffer values to the specified output textures
-	gWsPos[idx] = float4(shadeData.posW, 1.f);
-	gWsNorm[idx] = float4(shadeData.N, length(shadeData.posW - gScene.camera.data.posW));
-	gMatDif[idx] = float4(shadeData.diffuse, shadeData.opacity);
-	gMatSpec[idx] = float4(shadeData.specular, shadeData.linearRoughness);
-	gMatExtra[idx] = float4(shadeData.IoR, 
-                            shadeData.doubleSided ? 1.f : 0.f, 
+    if(payload.numBounces == 0)
+    {
+        gWsPos[idx] = float4(shadeData.posW, 1.f);
+        gWsNorm[idx] = float4(shadeData.N, length(shadeData.posW - gScene.camera.data.posW));
+        gMatDif[idx] = float4(shadeData.diffuse, shadeData.opacity);
+        gMatSpec[idx] = float4(shadeData.specular, shadeData.linearRoughness);
+        gMatExtra[idx] = float4(shadeData.IoR,
+                            shadeData.doubleSided ? 1.f : 0.f,
                             0.f, 0.f);
-    gMatEmis[idx] = float4(shadeData.emissive, 1.0f);
+        gMatEmis[idx] = float4(shadeData.emissive, 1.f);
+    }
 
-    payload.color += shadeData.diffuse;
+    float roughness = shadeData.linearRoughness * shadeData.linearRoughness;
+    float3 diffuse = shadeData.diffuse * shadeData.opacity * payload.throughput;
+    float3 specular = shadeData.specular * roughness * payload.throughput;
+    payload.color += diffuse + specular;
+    payload.color += payload.color * shadeData.emissive * payload.throughput;
+    
+    payload.throughput *= 0.2f;
     
     // new origin
     payload.origin = shadeData.computeNewRayOrigin();
