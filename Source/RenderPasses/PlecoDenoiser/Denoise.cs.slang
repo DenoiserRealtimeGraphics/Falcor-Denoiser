@@ -33,7 +33,7 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     const uint2 PP21 = uint2(PP11.x, PP11.y + 1);
     const uint2 PP22 = uint2(PP11.x + 1, PP11.y + 1);
 
-    //Convolutional Nueral Network (CNN) Filtering
+    //Convolutional Filtering
     //--------------------------------------------
     float4Block block =
     {
@@ -41,6 +41,16 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
         gInputTexture[PP10], gInputTexture[PP11], gInputTexture[PP12],
         gInputTexture[PP20], gInputTexture[PP21], gInputTexture[PP22]
     };
+
+    float3x3 kernel =
+    {
+        1.f / 16.f, 2.f / 16.f, 1.f / 16.f,
+        2.f / 16.f, 4.f / 16.f, 2.f / 16.f,
+        1.f / 16.f, 2.f / 16.f, 1.f / 16.f
+    };
+    float3 filtered = float3(block.m00.r * kernel[0][0] + block.m01.r * kernel[0][1] + block.m02.r * kernel[0][2] + block.m10.r * kernel[1][0] + block.m11.r * kernel[1][1] + block.m12.r * kernel[1][2] + block.m20.r * kernel[2][0] + block.m21.r * kernel[2][1] + block.m22.r * kernel[2][2],
+                            block.m00.g * kernel[0][0] + block.m01.g * kernel[0][1] + block.m02.g * kernel[0][2] + block.m10.g * kernel[1][0] + block.m11.g * kernel[1][1] + block.m12.g * kernel[1][2] + block.m20.g * kernel[2][0] + block.m21.g * kernel[2][1] + block.m22.g * kernel[2][2],
+                            block.m00.b * kernel[0][0] + block.m01.b * kernel[0][1] + block.m02.b * kernel[0][2] + block.m10.b * kernel[1][0] + block.m11.b * kernel[1][1] + block.m12.b * kernel[1][2] + block.m20.b * kernel[2][0] + block.m21.b * kernel[2][1] + block.m22.b * kernel[2][2]);
     
     float4Block filter =
     {
@@ -70,9 +80,9 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     float4 combo = (lr + ud) / 2.0f;
 
     
-    const float4 pixelCol = combo;
+    //const float4 pixelCol = combo;
     //const float4 pixelCol = float4(denoiseColStart.x, denoiseColStart.y, denoiseColStart.z, gInputTexture[PP11].w);
     //const float4 pixelCol = gInputTexture[PP11];
     
-    gOutputTexture[PP11] = pixelCol;                 // just output directly 
+    gOutputTexture[PP11] = float4(filtered.rgb, 1); // just output directly 
 }
