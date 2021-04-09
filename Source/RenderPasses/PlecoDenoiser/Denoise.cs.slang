@@ -34,7 +34,7 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     const uint2 PP22 = uint2(PP11.x + 1, PP11.y + 1);
 
     //Convolutional Nueral Network (CNN) Filtering
-
+    //--------------------------------------------
     float4Block block =
     {
         gInputTexture[PP00], gInputTexture[PP01], gInputTexture[PP02],
@@ -62,7 +62,16 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
                                     ((denoiseColStart.x * dp._m10) + (denoiseColStart.y * dp._m11) + (denoiseColStart.z * dp._m12)),
                                     ((denoiseColStart.x * dp._m20) + (denoiseColStart.y * dp._m21) + (denoiseColStart.z * dp._m22)));
 
-    const float4 pixelCol = float4(denoiseColStart.x, denoiseColStart.y, denoiseColStart.z, gInputTexture[PP11].w);
+
+    // simple left right / up down filter
+    //----------------------------------
+    float4 lr = (gInputTexture[PP10] + gInputTexture[PP11] + gInputTexture[PP12]) / 3.0f;
+    float4 ud = (gInputTexture[PP01] + gInputTexture[PP11] + gInputTexture[PP21]) / 3.0f;
+    float4 combo = (lr + ud) / 2.0f;
+
+    
+    const float4 pixelCol = combo;
+    //const float4 pixelCol = float4(denoiseColStart.x, denoiseColStart.y, denoiseColStart.z, gInputTexture[PP11].w);
     //const float4 pixelCol = gInputTexture[PP11];
     
     gOutputTexture[PP11] = pixelCol;                 // just output directly 
