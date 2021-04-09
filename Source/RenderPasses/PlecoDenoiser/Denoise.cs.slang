@@ -87,8 +87,6 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
 
 
     // bilateral filter
-    float g = 1;
-    
     float weight00 = kernel[0][0] * length(block.m00.rgb - block.m11.rgb) * kernel[0][0] * sqrt(2);
     float weight01 = kernel[0][1] * length(block.m01.rgb - block.m11.rgb) * kernel[0][1] * 1.f;
     float weight02 = kernel[0][2] * length(block.m02.rgb - block.m11.rgb) * kernel[0][2] * sqrt(2);
@@ -97,8 +95,9 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     float weight20 = kernel[2][0] * length(block.m20.rgb - block.m11.rgb) * kernel[2][0] * sqrt(2);
     float weight21 = kernel[2][1] * length(block.m21.rgb - block.m11.rgb) * kernel[2][1] * 1.f;
     float weight22 = kernel[2][2] * length(block.m22.rgb - block.m11.rgb) * kernel[2][2] * sqrt(2);
-
     float weight = weight00 + weight01 + weight02 + weight10 + weight12 + weight20 + weight21 + weight22;
+    weight = weight <= 0 ? 1.f : weight;
+
     float3 filter00 = (1.f / weight) * (block.m00.rgb * kernel[0][0] * length(block.m00.rgb - block.m11.rgb) * kernel[0][0] * sqrt(2));
     float3 filter01 = (1.f / weight) * (block.m01.rgb * kernel[0][1] * length(block.m01.rgb - block.m11.rgb) * kernel[0][1] * 1.f);
     float3 filter02 = (1.f / weight) * (block.m02.rgb * kernel[0][2] * length(block.m02.rgb - block.m11.rgb) * kernel[0][2] * sqrt(2));
@@ -109,10 +108,11 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     float3 filter22 = (1.f / weight) * (block.m22.rgb * kernel[2][2] * length(block.m22.rgb - block.m11.rgb) * kernel[2][2] * sqrt(2));
     
     float3 denoised = filter00 + filter01 + filter02 + filter10 + filter12 + filter20 + filter21 + filter22;
+    denoised = /*isnan(denoised) ||*/ denoised == float3(0, 0, 0) ? block.m11.rgb : denoised;
     
     //const float4 pixelCol = combo;
     //const float4 pixelCol = float4(denoiseColStart.x, denoiseColStart.y, denoiseColStart.z, gInputTexture[PP11].w);
     //const float4 pixelCol = gInputTexture[PP11];
     
-    gOutputTexture[PP11] = float4(denoised.rgb, 1); // just output directly 
+    gOutputTexture[PP11] = float4(denoised, 1); // just output directly 
 }
