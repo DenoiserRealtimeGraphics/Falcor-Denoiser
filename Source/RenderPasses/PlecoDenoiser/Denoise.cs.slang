@@ -89,24 +89,24 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     // bilateral filter
     float g = 1;
     
-    float weight00 = kernel[0][0] * (length(block.m00.rgb - block.m11.rgb)) * g * sqrt(2);
-    float weight01 = kernel[0][1] * (length(block.m01.rgb - block.m11.rgb)) * g * 1.f;
-    float weight02 = kernel[0][2] * (length(block.m02.rgb - block.m11.rgb)) * g * sqrt(2);
-    float weight10 = kernel[1][0] * (length(block.m10.rgb - block.m11.rgb)) * g * 1.f;
-    float weight12 = kernel[1][2] * (length(block.m12.rgb - block.m11.rgb)) * g * 1.f;
-    float weight20 = kernel[2][0] * (length(block.m20.rgb - block.m11.rgb)) * g * sqrt(2);
-    float weight21 = kernel[2][1] * (length(block.m21.rgb - block.m11.rgb)) * g * 1.f;
-    float weight22 = kernel[2][2] * (length(block.m22.rgb - block.m11.rgb)) * g * sqrt(2);
+    float weight00 = kernel[0][0] * length(block.m00.rgb - block.m11.rgb) * kernel[0][0] * sqrt(2);
+    float weight01 = kernel[0][1] * length(block.m01.rgb - block.m11.rgb) * kernel[0][1] * 1.f;
+    float weight02 = kernel[0][2] * length(block.m02.rgb - block.m11.rgb) * kernel[0][2] * sqrt(2);
+    float weight10 = kernel[1][0] * length(block.m10.rgb - block.m11.rgb) * kernel[1][0] * 1.f;
+    float weight12 = kernel[1][2] * length(block.m12.rgb - block.m11.rgb) * kernel[1][2] * 1.f;
+    float weight20 = kernel[2][0] * length(block.m20.rgb - block.m11.rgb) * kernel[2][0] * sqrt(2);
+    float weight21 = kernel[2][1] * length(block.m21.rgb - block.m11.rgb) * kernel[2][1] * 1.f;
+    float weight22 = kernel[2][2] * length(block.m22.rgb - block.m11.rgb) * kernel[2][2] * sqrt(2);
 
     float weight = weight00 + weight01 + weight02 + weight10 + weight12 + weight20 + weight21 + weight22;
-    float3 filter00 = (1.f / weight) * (block.m00.rgb * kernel[0][0] * (length(block.m00.rgb - block.m11.rgb)) * g * sqrt(2));
-    float3 filter01 = (1.f / weight) * (block.m01.rgb * kernel[0][1] * (length(block.m01.rgb - block.m11.rgb)) * g * 1.f);
-    float3 filter02 = (1.f / weight) * (block.m02.rgb * kernel[0][2] * (length(block.m02.rgb - block.m11.rgb)) * g * sqrt(2));
-    float3 filter10 = (1.f / weight) * (block.m10.rgb * kernel[1][0] * (length(block.m10.rgb - block.m11.rgb)) * g * 1.f);
-    float3 filter12 = (1.f / weight) * (block.m12.rgb * kernel[1][2] * (length(block.m12.rgb - block.m11.rgb)) * g * 1.f);
-    float3 filter20 = (1.f / weight) * (block.m20.rgb * kernel[2][0] * (length(block.m20.rgb - block.m11.rgb)) * g * sqrt(2));
-    float3 filter21 = (1.f / weight) * (block.m21.rgb * kernel[2][1] * (length(block.m21.rgb - block.m11.rgb)) * g * 1.f);
-    float3 filter22 = (1.f / weight) * (block.m22.rgb * kernel[2][2] * (length(block.m22.rgb - block.m11.rgb)) * g * sqrt(2));
+    float3 filter00 = (1.f / weight) * (block.m00.rgb * kernel[0][0] * length(block.m00.rgb - block.m11.rgb) * kernel[0][0] * sqrt(2));
+    float3 filter01 = (1.f / weight) * (block.m01.rgb * kernel[0][1] * length(block.m01.rgb - block.m11.rgb) * kernel[0][1] * 1.f);
+    float3 filter02 = (1.f / weight) * (block.m02.rgb * kernel[0][2] * length(block.m02.rgb - block.m11.rgb) * kernel[0][2] * sqrt(2));
+    float3 filter10 = (1.f / weight) * (block.m10.rgb * kernel[1][0] * length(block.m10.rgb - block.m11.rgb) * kernel[1][0] * 1.f);
+    float3 filter12 = (1.f / weight) * (block.m12.rgb * kernel[1][2] * length(block.m12.rgb - block.m11.rgb) * kernel[1][2] * 1.f);
+    float3 filter20 = (1.f / weight) * (block.m20.rgb * kernel[2][0] * length(block.m20.rgb - block.m11.rgb) * kernel[0][0] * sqrt(2));
+    float3 filter21 = (1.f / weight) * (block.m21.rgb * kernel[2][1] * length(block.m21.rgb - block.m11.rgb) * kernel[2][1] * 1.f);
+    float3 filter22 = (1.f / weight) * (block.m22.rgb * kernel[2][2] * length(block.m22.rgb - block.m11.rgb) * kernel[2][2] * sqrt(2));
     
     float3 denoised = filter00 + filter01 + filter02 + filter10 + filter12 + filter20 + filter21 + filter22;
     
