@@ -90,6 +90,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DenoiserRenderPass", "Sourc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlecoRayTracer", "Source\RenderPasses\PlecoRayTracer\PlecoRayTracer.vcxproj", "{83260E00-20ED-46FC-BDA2-6418D5FF01C9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlecoDenoiser", "Source\RenderPasses\PlecoDenoiser\PlecoDenoiser.vcxproj", "{C90D6174-B458-4AEF-AD03-B14075B1B07F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebugD3D12|x64 = DebugD3D12|x64
@@ -232,6 +234,10 @@ Global
 		{83260E00-20ED-46FC-BDA2-6418D5FF01C9}.DebugD3D12|x64.Build.0 = Debug|x64
 		{83260E00-20ED-46FC-BDA2-6418D5FF01C9}.ReleaseD3D12|x64.ActiveCfg = Release|x64
 		{83260E00-20ED-46FC-BDA2-6418D5FF01C9}.ReleaseD3D12|x64.Build.0 = Release|x64
+		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.DebugD3D12|x64.ActiveCfg = Debug|x64
+		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.DebugD3D12|x64.Build.0 = Debug|x64
+		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.ReleaseD3D12|x64.ActiveCfg = Release|x64
+		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.ReleaseD3D12|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
