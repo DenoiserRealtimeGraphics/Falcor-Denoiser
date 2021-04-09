@@ -3,8 +3,8 @@ cbuffer CB
     uint gFrameCount;
 };
 
-Texture2D<float4> gInputTexture;        //input data
-RWTexture2D<float4> gOutputTexture;     //output data
+Texture2D<float4> gInputTexture; //input data
+RWTexture2D<float4> gOutputTexture; //output data
 
 // 3x3 block of float4s
 struct float4Block
@@ -48,6 +48,12 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
         2.f / 16.f, 4.f / 16.f, 2.f / 16.f,
         1.f / 16.f, 2.f / 16.f, 1.f / 16.f
     };
+    //float3x3 edgeDetectionKernel =
+    //{
+    //    -1, -1, -1
+    //    - 1, 8, -1,
+    //    -1, -1, -1
+    //};
     float3 filtered = float3(block.m00.r * kernel[0][0] + block.m01.r * kernel[0][1] + block.m02.r * kernel[0][2] + block.m10.r * kernel[1][0] + block.m11.r * kernel[1][1] + block.m12.r * kernel[1][2] + block.m20.r * kernel[2][0] + block.m21.r * kernel[2][1] + block.m22.r * kernel[2][2],
                             block.m00.g * kernel[0][0] + block.m01.g * kernel[0][1] + block.m02.g * kernel[0][2] + block.m10.g * kernel[1][0] + block.m11.g * kernel[1][1] + block.m12.g * kernel[1][2] + block.m20.g * kernel[2][0] + block.m21.g * kernel[2][1] + block.m22.g * kernel[2][2],
                             block.m00.b * kernel[0][0] + block.m01.b * kernel[0][1] + block.m02.b * kernel[0][2] + block.m10.b * kernel[1][0] + block.m11.b * kernel[1][1] + block.m12.b * kernel[1][2] + block.m20.b * kernel[2][0] + block.m21.b * kernel[2][1] + block.m22.b * kernel[2][2]);
@@ -79,10 +85,34 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
     float4 ud = (gInputTexture[PP01] + gInputTexture[PP11] + gInputTexture[PP21]) / 3.0f;
     float4 combo = (lr + ud) / 2.0f;
 
+
+    // bilateral filter
+    float g = 1;
+    
+    float3 weight00 = kernel[0][0] * (abs(block.m00.rgb - block.m11.rgb)) * g * sqrt(2);
+    float3 weight01 = kernel[0][1] * (abs(block.m01.rgb - block.m11.rgb)) * g * 1.f;
+    float3 weight02 = kernel[0][2] * (abs(block.m02.rgb - block.m11.rgb)) * g * sqrt(2);
+    float3 weight10 = kernel[1][0] * (abs(block.m10.rgb - block.m11.rgb)) * g * 1.f;
+    float3 weight12 = kernel[1][2] * (abs(block.m12.rgb - block.m11.rgb)) * g * 1.f;
+    float3 weight20 = kernel[2][0] * (abs(block.m20.rgb - block.m11.rgb)) * g * sqrt(2);
+    float3 weight21 = kernel[2][1] * (abs(block.m21.rgb - block.m11.rgb)) * g * 1.f;
+    float3 weight22 = kernel[2][2] * (abs(block.m22.rgb - block.m11.rgb)) * g * sqrt(2);
+
+    float3 weight = weight00 + weight01 + weight02 + weight10 + weight12 + weight20 + weight21 + weight22;
+    float3 filter00 = (1.f / weight) * (block.m00.rgb * kernel[0][0] * (abs(block.m00.rgb - block.m11.rgb)) * g * sqrt(2));
+    float3 filter01 = (1.f / weight) * (block.m01.rgb * kernel[0][1] * (abs(block.m01.rgb - block.m11.rgb)) * g * 1.f);
+    float3 filter02 = (1.f / weight) * (block.m02.rgb * kernel[0][2] * (abs(block.m02.rgb - block.m11.rgb)) * g * sqrt(2));
+    float3 filter10 = (1.f / weight) * (block.m10.rgb * kernel[1][0] * (abs(block.m10.rgb - block.m11.rgb)) * g * 1.f);
+    float3 filter12 = (1.f / weight) * (block.m12.rgb * kernel[1][2] * (abs(block.m12.rgb - block.m11.rgb)) * g * 1.f);
+    float3 filter20 = (1.f / weight) * (block.m20.rgb * kernel[2][0] * (abs(block.m20.rgb - block.m11.rgb)) * g * sqrt(2));
+    float3 filter21 = (1.f / weight) * (block.m21.rgb * kernel[2][1] * (abs(block.m21.rgb - block.m11.rgb)) * g * 1.f);
+    float3 filter22 = (1.f / weight) * (block.m22.rgb * kernel[2][2] * (abs(block.m22.rgb - block.m11.rgb)) * g * sqrt(2));
+    
+    float3 denoised = filter00 + filter01 + filter02 + filter10 + filter12 + filter20 + filter21 + filter22;
     
     //const float4 pixelCol = combo;
     //const float4 pixelCol = float4(denoiseColStart.x, denoiseColStart.y, denoiseColStart.z, gInputTexture[PP11].w);
     //const float4 pixelCol = gInputTexture[PP11];
     
-    gOutputTexture[PP11] = float4(filtered.rgb, 1); // just output directly 
+    gOutputTexture[PP11] = float4(denoised.rgb, 1); // just output directly 
 }

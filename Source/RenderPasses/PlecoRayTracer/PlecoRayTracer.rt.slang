@@ -181,7 +181,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     payload.color += diffuse + specular;
     payload.color += payload.color * shadeData.emissive * payload.throughput;
     
-    payload.throughput *= 0.9f;
+    payload.throughput *= 0.2f;
     
     // new origin
     payload.origin = shadeData.computeNewRayOrigin();
