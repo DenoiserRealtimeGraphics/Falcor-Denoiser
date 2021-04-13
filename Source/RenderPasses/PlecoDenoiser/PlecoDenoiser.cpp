@@ -51,6 +51,7 @@ extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary& lib)
 PlecoDenoiser::PlecoDenoiser(const Dictionary& dict)
 {
     mpProgram = ComputeProgram::createFromFile(kShaderFile, "denoise", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
+    mpProgram->addDefine("GAUSSIAN_SIGMA", std::to_string(mGaussianSigma));
     mpVars = ComputeVars::create(mpProgram->getReflector());
     mpState = ComputeState::create();
 }
@@ -82,6 +83,15 @@ RenderPassReflection PlecoDenoiser::reflect(const CompileData& compileData)
 
 void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
+    // Update refresh flag if options that affect the output have changed.
+    auto& dict = renderData.getDictionary();
+    if (mOptionsChanged)
+    {
+        auto flags = dict.getValue(kRenderPassRefreshFlags, RenderPassRefreshFlags::None);
+        dict[Falcor::kRenderPassRefreshFlags] = flags | Falcor::RenderPassRefreshFlags::RenderOptionsChanged;
+        mOptionsChanged = false;
+    }
+
     // renderData holds the requested resources
     // auto& pTexture = renderData["src"]->asTexture();
 
@@ -101,6 +111,8 @@ void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& ren
             }
         }
     }
+
+    mpProgram->addDefine("GAUSSIAN_SIGMA", std::to_string(mGaussianSigma));
 
     //input buffer
     Texture::SharedPtr inputBuffer = renderData[kInputChannel]->asTexture();
@@ -132,4 +144,12 @@ void PlecoDenoiser::setScene(RenderContext* pRenderContext, const Scene::SharedP
 
 void PlecoDenoiser::renderUI(Gui::Widgets& widget)
 {
+    bool dirty = false;
+
+    dirty |= widget.var("Gaussian Sigma", mGaussianSigma, 0.f, 9999.f);
+
+    if(dirty)
+    {
+        mOptionsChanged = true;
+    }
 }

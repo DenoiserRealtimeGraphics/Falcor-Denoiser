@@ -30,6 +30,7 @@ struct SimplePayload
     float3 direction;
     uint numBounces;
     float throughput;
+    float emThroughput;
 
     SampleGenerator sampleGen;
 
@@ -42,6 +43,7 @@ struct SimplePayload
         payload.direction = float3(0, 0, 0);
         payload.numBounces = 0;
         payload.throughput = 1.0f;
+        payload.emThroughput = 1.0f;
         payload.sampleGen = sg;
         return payload;
     }
@@ -179,11 +181,13 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     float3 diffuse = shadeData.diffuse * shadeData.opacity * payload.throughput;
     float3 specular = shadeData.specular * roughness * payload.throughput;
     payload.color += diffuse + specular;
-    payload.color += payload.color * shadeData.emissive * payload.throughput;
-    
-    payload.throughput *= 0.2f;
+    payload.color += payload.color * shadeData.emissive * payload.emThroughput;
+
+    payload.throughput *= 0.5f;
+    payload.emThroughput *= 0.1f;
     
     // new origin
+    float3 prevOrigin = payload.origin;
     payload.origin = shadeData.computeNewRayOrigin();
     // Generate scatter ray as cosine-weighted direction over the hemisphere.
     float pdf = 0.f;
@@ -191,7 +195,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     float3 wi = sample_cosine_hemisphere_concentric(u, pdf);
     wi = fromLocal(wi, shadeData);
     payload.direction = wi;
-    
+
     payload.numBounces++;
 }
 
