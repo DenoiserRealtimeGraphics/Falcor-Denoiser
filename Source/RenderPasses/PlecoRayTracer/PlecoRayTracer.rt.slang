@@ -30,7 +30,6 @@ struct SimplePayload
     float3 direction;
     uint numBounces;
     float throughput;
-    float emThroughput;
 
     SampleGenerator sampleGen;
 
@@ -43,7 +42,6 @@ struct SimplePayload
         payload.direction = float3(0, 0, 0);
         payload.numBounces = 0;
         payload.throughput = 1.0f;
-        payload.emThroughput = 1.0f;
         payload.sampleGen = sg;
         return payload;
     }
@@ -160,10 +158,6 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
     ShadingData shadeData = prepareShadingData(v, materialID, gScene.materials[materialID], gScene.materialResources[materialID], -WorldRayDirection(), 0.f);
 
-    //if(checkLightHit(posW) == false)
-    //{
-    //}
-
 	// Save out our G-buffer values to the specified output textures
     if(payload.numBounces == 0)
     {
@@ -182,27 +176,32 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     {
         // pick one of the light sources randomly
         const uint lightIndex = min(uint(sampleNext1D(payload.sampleGen) * lightCount), lightCount - 1);
-        // sample local light source.
+        // sample light source
         LightData light = gScene.getLight(lightIndex);
 
-        //if (payload.numBounces == 0)
-        {
-            float3 L = -light.dirW;
-            float3 N = shadeData.N;
-            float3 V = -payload.direction;
+        float3 L = -light.dirW;
+        float3 N = shadeData.N;
+        float3 V = -payload.direction;
 
-            float3 baseCol = (shadeData.diffuse * shadeData.opacity + shadeData.specular * shadeData.linearRoughness) * payload.throughput;
-            
-            float3 diffuseLight = light.intensity * shadeData.opacity * max(0, dot(N, L)) * payload.throughput;
-            float3 specularLight = light.intensity * shadeData.specular * pow(max(0, dot(V, (2.f * max(0, dot(N, L)) * N) - L)), 32.f) * payload.throughput;
-            float3 emissiveLight = shadeData.emissive * payload.emThroughput;
-            
-            payload.color += baseCol * diffuseLight + baseCol * specularLight + baseCol * emissiveLight;
-        }
+        // diffuse
+        float3 baseCol = shadeData.diffuse + shadeData.specular;
+        float diffuseProduct = clamp(dot(N, L), 0, 1);
+        float3 diffuseLight = light.intensity * shadeData.opacity * diffuseProduct;
+        float3 diffuseCol = baseCol * diffuseLight;
+
+        // specular
+        float3 R = 2.f * diffuseProduct * N - L;
+        R = normalize(R);
+        float specularProduct = pow(clamp(dot(R, V), 0, 1), 32.f);
+        float3 specularLight = light.intensity * shadeData.linearRoughness * specularProduct;
+        diffuseCol *= (1.f - specularProduct);
+        float3 emissiveLight = shadeData.emissive * specularProduct;
+
+        // total
+        payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;
     }
 
     payload.throughput *= 0.5f;
-    payload.emThroughput *= 0.1f;
     
     // new origin
     float3 prevOrigin = payload.origin;
