@@ -186,8 +186,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         // diffuse
         float3 baseCol = shadeData.diffuse + shadeData.specular;
         float diffuseProduct = clamp(dot(N, L), 0, 1);
-        float3 diffuseLight = light.intensity * shadeData.opacity * diffuseProduct;
-        float3 diffuseCol = baseCol * diffuseLight;
+        float3 diffuseCol = baseCol * shadeData.opacity * diffuseProduct;
 
         // specular
         float3 R = 2.f * diffuseProduct * N - L;
@@ -201,7 +200,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;
     }
 
-    payload.throughput *= 0.5f;
+    payload.throughput *= 0.0f;
     
     // new origin
     float3 prevOrigin = payload.origin;
@@ -215,4 +214,3 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
 
     payload.numBounces++;
 }
-
