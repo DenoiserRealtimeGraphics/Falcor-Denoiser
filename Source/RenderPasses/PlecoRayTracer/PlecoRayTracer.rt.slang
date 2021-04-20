@@ -29,6 +29,7 @@ struct SimplePayload
     float3 origin;
     float3 direction;
     uint numBounces;
+    float distance;
     float throughput;
 
     SampleGenerator sampleGen;
@@ -41,6 +42,7 @@ struct SimplePayload
         payload.origin = float3(0, 0, 0);
         payload.direction = float3(0, 0, 0);
         payload.numBounces = 0;
+        payload.distance = 0.f;
         payload.throughput = 1.0f;
         payload.sampleGen = sg;
         return payload;
@@ -158,6 +160,8 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
     ShadingData shadeData = prepareShadingData(v, materialID, gScene.materials[materialID], gScene.materialResources[materialID], -WorldRayDirection(), 0.f);
 
+    payload.distance += length(shadeData.posW - payload.origin);
+    
 	// Save out our G-buffer values to the specified output textures
     if(payload.numBounces == 0)
     {
@@ -194,14 +198,17 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         float specularProduct = pow(clamp(dot(R, V), 0, 1), 32.f);
         float3 specularLight = light.intensity * shadeData.linearRoughness * specularProduct;
         diffuseCol *= (1.f - specularProduct);
-        float3 emissiveLight = shadeData.emissive * specularProduct;
+        float3 emissiveLight = shadeData.emissive * diffuseProduct;
 
         // total
-        payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;
+        float3 col = diffuseCol + specularLight + emissiveLight;
+        col /= payload.distance;
+        payload.color += col;
+        //payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;
     }
 
     payload.throughput *= 0.5f;
-    
+
     // new origin
     float3 prevOrigin = payload.origin;
     payload.origin = shadeData.computeNewRayOrigin();
