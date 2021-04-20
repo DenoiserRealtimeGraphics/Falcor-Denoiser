@@ -200,7 +200,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;
     }
 
-    payload.throughput *= 0.0f;
+    payload.throughput *= 0.5f;
     
     // new origin
     float3 prevOrigin = payload.origin;
