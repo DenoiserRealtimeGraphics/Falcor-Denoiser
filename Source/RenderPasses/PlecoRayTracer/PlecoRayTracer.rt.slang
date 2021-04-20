@@ -177,11 +177,30 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         gMatEmis[idx] = float4(shadeData.emissive, 1.f);
     }
 
-    float roughness = shadeData.linearRoughness * shadeData.linearRoughness;
-    float3 diffuse = shadeData.diffuse * shadeData.opacity * payload.throughput;
-    float3 specular = shadeData.specular * roughness * payload.throughput;
-    payload.color += diffuse + specular;
-    payload.color += payload.color * shadeData.emissive * payload.emThroughput;
+    const uint lightCount = gScene.getLightCount();
+    if (lightCount > 0)
+    {
+        // pick one of the light sources randomly
+        const uint lightIndex = min(uint(sampleNext1D(payload.sampleGen) * lightCount), lightCount - 1);
+        float invPdf = lightCount; // Light selection pdf = 1.0 / lightCount.
+        // sample local light source.
+        LightData light = gScene.getLight(0);
+        //AnalyticLightSample ls;
+        //bool valid = sampleLight(payload.origin, gScene.getLight(lightIndex), payload.sampleGen, ls);
+
+        //if(valid)
+        {
+            //float roughness = shadeData.linearRoughness * shadeData.linearRoughness;
+            float3 L = -light.dirW;
+            float3 N = shadeData.N;
+            float3 V = payload.direction;
+            float3 diffuse = shadeData.diffuse * shadeData.opacity * dot(N, L) * payload.throughput;
+            //float3 specular = shadeData.specular * payload.throughput * pow(dot(V, (2.f * dot(N, L) * N) - L), 32.f);
+            payload.color += diffuse;
+            //payload.color += diffuse;
+            //payload.color += payload.color * shadeData.emissive * payload.emThroughput;
+        }
+    }
 
     payload.throughput *= 0.5f;
     payload.emThroughput *= 0.1f;
