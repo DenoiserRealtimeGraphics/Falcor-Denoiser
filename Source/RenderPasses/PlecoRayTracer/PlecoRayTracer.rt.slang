@@ -114,7 +114,7 @@ void Miss(inout SimplePayload payload)
     if (payload.numBounces > 0)
     {
         float3 envMap = gScene.envMap.eval(payload.direction);
-        payload.color += payload.color * envMap * payload.throughput;
+        //payload.color += payload.color * envMap * payload.throughput;
     }
     // Draw env map background
     else
@@ -182,23 +182,22 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     {
         // pick one of the light sources randomly
         const uint lightIndex = min(uint(sampleNext1D(payload.sampleGen) * lightCount), lightCount - 1);
-        float invPdf = lightCount; // Light selection pdf = 1.0 / lightCount.
         // sample local light source.
-        LightData light = gScene.getLight(0);
-        //AnalyticLightSample ls;
-        //bool valid = sampleLight(payload.origin, gScene.getLight(lightIndex), payload.sampleGen, ls);
+        LightData light = gScene.getLight(lightIndex);
 
-        //if(valid)
+        //if (payload.numBounces == 0)
         {
-            //float roughness = shadeData.linearRoughness * shadeData.linearRoughness;
             float3 L = -light.dirW;
             float3 N = shadeData.N;
-            float3 V = payload.direction;
-            float3 diffuse = shadeData.diffuse * shadeData.opacity * dot(N, L) * payload.throughput;
-            //float3 specular = shadeData.specular * payload.throughput * pow(dot(V, (2.f * dot(N, L) * N) - L), 32.f);
-            payload.color += diffuse;
-            //payload.color += diffuse;
-            //payload.color += payload.color * shadeData.emissive * payload.emThroughput;
+            float3 V = -payload.direction;
+
+            float3 baseCol = (shadeData.diffuse * shadeData.opacity + shadeData.specular * shadeData.linearRoughness) * payload.throughput;
+            
+            float3 diffuseLight = light.intensity * shadeData.opacity * max(0, dot(N, L)) * payload.throughput;
+            float3 specularLight = light.intensity * shadeData.specular * pow(max(0, dot(V, (2.f * max(0, dot(N, L)) * N) - L)), 32.f) * payload.throughput;
+            float3 emissiveLight = shadeData.emissive * payload.emThroughput;
+            
+            payload.color += baseCol * diffuseLight + baseCol * specularLight + baseCol * emissiveLight;
         }
     }
 
