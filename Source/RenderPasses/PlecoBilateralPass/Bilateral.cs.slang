@@ -28,7 +28,7 @@ float calcGaussian1D(float x, float sigma)
     return (1.f / (sqrt(2.f * 3.14159f) * sigma)) * pow(2.71828f, -(x * x) / (2.f * sigma * sigma));
 }
 
-void bilateral(uint3 dtID)
+void bilateralFunction(uint3 dtID)
 {
     // PIXEL POSITIONS
     //  00 01 02
@@ -225,7 +225,7 @@ void bilateral(uint3 dtID)
 }
 
 [numthreads(16, 16, 1)]
-void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
+void bilateral(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
-    bilateral(dispatchThreadId);
+    bilateralFunction(dispatchThreadId);
 }

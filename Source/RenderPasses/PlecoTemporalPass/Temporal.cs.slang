@@ -38,7 +38,7 @@ void updatePrevFrame(uint3 dtID)
 }
 
 [numthreads(16, 16, 1)]
-void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
+void temporal(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
     //make sure we can actually use the previous frame
     if (gFrameCount > 0)
