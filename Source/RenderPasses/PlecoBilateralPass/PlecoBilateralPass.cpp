@@ -25,14 +25,15 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#include "PlecoDenoiser.h"
+#include "PlecoBilateralPass.h"
 #include "RenderGraph/RenderPassHelpers.h"
+
 
 namespace
 {
     const char kDesc[] = "Insert pass description here";
 
-    const char kShaderFile[] = "RenderPasses/PlecoDenoiser/Denoise.cs.slang";
+    const char kShaderFile[] = "RenderPasses/PlecoBilateralPass/Bilateral.cs.slang";
     const char kInputChannel[] = "Input_From_PlecoRT";
     const char kOutputChannel[] = "Output_From_PD";
 }
@@ -43,34 +44,34 @@ extern "C" __declspec(dllexport) const char* getProjDir()
     return PROJECT_DIR;
 }
 
-extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary& lib)
+extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary & lib)
 {
-    lib.registerClass("PlecoDenoiser", kDesc, PlecoDenoiser::create);
+    lib.registerClass("PlecoBilateralPass", kDesc, PlecoBilateralPass::create);
 }
 
-PlecoDenoiser::PlecoDenoiser(const Dictionary& dict)
+PlecoBilateralPass::PlecoBilateralPass(const Dictionary& dict)
 {
-    mpProgram = ComputeProgram::createFromFile(kShaderFile, "denoise", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
+    mpProgram = ComputeProgram::createFromFile(kShaderFile, "bilateral", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
     mpProgram->addDefine("GAUSSIAN_SIGMA", std::to_string(mGaussianSigma));
     mpVars = ComputeVars::create(mpProgram->getReflector());
     mpState = ComputeState::create();
 }
 
 
-PlecoDenoiser::SharedPtr PlecoDenoiser::create(RenderContext* pRenderContext, const Dictionary& dict)
+PlecoBilateralPass::SharedPtr PlecoBilateralPass::create(RenderContext* pRenderContext, const Dictionary& dict)
 {
-    SharedPtr pPass = SharedPtr(new PlecoDenoiser(dict));
+    SharedPtr pPass = SharedPtr(new PlecoBilateralPass(dict));
     return pPass;
 }
 
-std::string PlecoDenoiser::getDesc() { return kDesc; }
+std::string PlecoBilateralPass::getDesc() { return kDesc; }
 
-Dictionary PlecoDenoiser::getScriptingDictionary()
+Dictionary PlecoBilateralPass::getScriptingDictionary()
 {
     return Dictionary();
 }
 
-RenderPassReflection PlecoDenoiser::reflect(const CompileData& compileData)
+RenderPassReflection PlecoBilateralPass::reflect(const CompileData& compileData)
 {
     // Define the required resources here
     RenderPassReflection reflector;
@@ -81,7 +82,7 @@ RenderPassReflection PlecoDenoiser::reflect(const CompileData& compileData)
     return reflector;
 }
 
-void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& renderData)
+void PlecoBilateralPass::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
     // Update refresh flag if options that affect the output have changed.
     auto& dict = renderData.getDictionary();
@@ -127,9 +128,7 @@ void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& ren
     mpVars["gInputTexture"] = inputBuffer;
     mpVars["gOutputTexture"] = outputBuffer;
 
-    //prior frame info
-    mpVars["gPrevOutputTexture"] = mpPrevFrame;
-
+    
     //make sure program is okay and set it
     assert(mpProgram);
     mpState->setProgram(mpProgram);
@@ -139,19 +138,19 @@ void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& ren
     pRenderContext->dispatch(mpState.get(), mpVars.get(), numberOfGroups);
 }
 
-void PlecoDenoiser::setScene(RenderContext* pRenderContext, const Scene::SharedPtr& pScene)
+void PlecoBilateralPass::setScene(RenderContext* pRenderContext, const Scene::SharedPtr& pScene)
 {
     mpScene = pScene;
     mFrameCount = 0;
 }
 
-void PlecoDenoiser::renderUI(Gui::Widgets& widget)
+void PlecoBilateralPass::renderUI(Gui::Widgets& widget)
 {
     bool dirty = false;
 
     dirty |= widget.var("Gaussian Sigma", mGaussianSigma, 0.f, 9999.f);
 
-    if(dirty)
+    if (dirty)
     {
         mOptionsChanged = true;
     }

@@ -25,14 +25,14 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#include "PlecoDenoiser.h"
+#include "PlecoTemporalPass.h"
 #include "RenderGraph/RenderPassHelpers.h"
 
 namespace
 {
     const char kDesc[] = "Insert pass description here";
 
-    const char kShaderFile[] = "RenderPasses/PlecoDenoiser/Denoise.cs.slang";
+    const char kShaderFile[] = "RenderPasses/PlecoTemporalPass/Temporal.cs.slang";
     const char kInputChannel[] = "Input_From_PlecoRT";
     const char kOutputChannel[] = "Output_From_PD";
 }
@@ -43,34 +43,33 @@ extern "C" __declspec(dllexport) const char* getProjDir()
     return PROJECT_DIR;
 }
 
-extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary& lib)
+extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary & lib)
 {
-    lib.registerClass("PlecoDenoiser", kDesc, PlecoDenoiser::create);
+    lib.registerClass("PlecoTemporalPass", kDesc, PlecoTemporalPass::create);
 }
 
-PlecoDenoiser::PlecoDenoiser(const Dictionary& dict)
+PlecoTemporalPass::PlecoTemporalPass(const Dictionary& dict)
 {
-    mpProgram = ComputeProgram::createFromFile(kShaderFile, "denoise", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
-    mpProgram->addDefine("GAUSSIAN_SIGMA", std::to_string(mGaussianSigma));
+    mpProgram = ComputeProgram::createFromFile(kShaderFile, "temporal", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
     mpVars = ComputeVars::create(mpProgram->getReflector());
     mpState = ComputeState::create();
 }
 
 
-PlecoDenoiser::SharedPtr PlecoDenoiser::create(RenderContext* pRenderContext, const Dictionary& dict)
+PlecoTemporalPass::SharedPtr PlecoTemporalPass::create(RenderContext* pRenderContext, const Dictionary& dict)
 {
-    SharedPtr pPass = SharedPtr(new PlecoDenoiser(dict));
+    SharedPtr pPass = SharedPtr(new PlecoTemporalPass(dict));
     return pPass;
 }
 
-std::string PlecoDenoiser::getDesc() { return kDesc; }
+std::string PlecoTemporalPass::getDesc() { return kDesc; }
 
-Dictionary PlecoDenoiser::getScriptingDictionary()
+Dictionary PlecoTemporalPass::getScriptingDictionary()
 {
     return Dictionary();
 }
 
-RenderPassReflection PlecoDenoiser::reflect(const CompileData& compileData)
+RenderPassReflection PlecoTemporalPass::reflect(const CompileData& compileData)
 {
     // Define the required resources here
     RenderPassReflection reflector;
@@ -81,16 +80,10 @@ RenderPassReflection PlecoDenoiser::reflect(const CompileData& compileData)
     return reflector;
 }
 
-void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& renderData)
+void PlecoTemporalPass::execute(RenderContext* pRenderContext, const RenderData& renderData)
 {
     // Update refresh flag if options that affect the output have changed.
     auto& dict = renderData.getDictionary();
-    if (mOptionsChanged)
-    {
-        auto flags = dict.getValue(kRenderPassRefreshFlags, RenderPassRefreshFlags::None);
-        dict[Falcor::kRenderPassRefreshFlags] = flags | Falcor::RenderPassRefreshFlags::RenderOptionsChanged;
-        mOptionsChanged = false;
-    }
 
     // renderData holds the requested resources
     // auto& pTexture = renderData["src"]->asTexture();
@@ -111,8 +104,6 @@ void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& ren
             }
         }
     }
-
-    mpProgram->addDefine("GAUSSIAN_SIGMA", std::to_string(mGaussianSigma));
 
     //input buffer
     Texture::SharedPtr inputBuffer = renderData[kInputChannel]->asTexture();
@@ -139,20 +130,13 @@ void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& ren
     pRenderContext->dispatch(mpState.get(), mpVars.get(), numberOfGroups);
 }
 
-void PlecoDenoiser::setScene(RenderContext* pRenderContext, const Scene::SharedPtr& pScene)
+void PlecoTemporalPass::setScene(RenderContext* pRenderContext, const Scene::SharedPtr& pScene)
 {
     mpScene = pScene;
     mFrameCount = 0;
 }
 
-void PlecoDenoiser::renderUI(Gui::Widgets& widget)
+void PlecoTemporalPass::renderUI(Gui::Widgets& widget)
 {
-    bool dirty = false;
 
-    dirty |= widget.var("Gaussian Sigma", mGaussianSigma, 0.f, 9999.f);
-
-    if(dirty)
-    {
-        mOptionsChanged = true;
-    }
 }

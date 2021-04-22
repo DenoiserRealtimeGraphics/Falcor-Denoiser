@@ -92,6 +92,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlecoRayTracer", "Source\Re
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlecoDenoiser", "Source\RenderPasses\PlecoDenoiser\PlecoDenoiser.vcxproj", "{C90D6174-B458-4AEF-AD03-B14075B1B07F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlecoTemporalPass", "Source\RenderPasses\PlecoTemporalPass\PlecoTemporalPass.vcxproj", "{357A4EA2-00BB-4566-BEDD-50BFC2FFF835}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PlecoBilateralPass", "Source\RenderPasses\PlecoBilateralPass\PlecoBilateralPass.vcxproj", "{7B226FD3-5873-4855-A24E-881C6080572E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebugD3D12|x64 = DebugD3D12|x64
@@ -238,6 +242,14 @@ Global
 		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.DebugD3D12|x64.Build.0 = Debug|x64
 		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.ReleaseD3D12|x64.ActiveCfg = Release|x64
 		{C90D6174-B458-4AEF-AD03-B14075B1B07F}.ReleaseD3D12|x64.Build.0 = Release|x64
+		{357A4EA2-00BB-4566-BEDD-50BFC2FFF835}.DebugD3D12|x64.ActiveCfg = Debug|x64
+		{357A4EA2-00BB-4566-BEDD-50BFC2FFF835}.DebugD3D12|x64.Build.0 = Debug|x64
+		{357A4EA2-00BB-4566-BEDD-50BFC2FFF835}.ReleaseD3D12|x64.ActiveCfg = Release|x64
+		{357A4EA2-00BB-4566-BEDD-50BFC2FFF835}.ReleaseD3D12|x64.Build.0 = Release|x64
+		{7B226FD3-5873-4855-A24E-881C6080572E}.DebugD3D12|x64.ActiveCfg = Debug|x64
+		{7B226FD3-5873-4855-A24E-881C6080572E}.DebugD3D12|x64.Build.0 = Debug|x64
+		{7B226FD3-5873-4855-A24E-881C6080572E}.ReleaseD3D12|x64.ActiveCfg = Release|x64
+		{7B226FD3-5873-4855-A24E-881C6080572E}.ReleaseD3D12|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

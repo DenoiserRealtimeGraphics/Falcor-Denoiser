@@ -4,7 +4,6 @@ cbuffer CB
 };
 
 Texture2D<float4> gInputTexture; //input data
-RWTexture2D<float4> gPrevOutputTexture;    //prior input data CAN BE WRITTEN INTO
 RWTexture2D<float4> gOutputTexture; //output data
 
 static const bool kGaussianSigma = GAUSSIAN_SIGMA;
@@ -225,38 +224,8 @@ void bilateral(uint3 dtID)
     gOutputTexture[PP22] = float4(denoised, 1); // just output directly 
 }
 
-float3 ema(uint3 dtID)
-{
-    float3 motionVectorPP = (gInputTexture[dtID.xy] - gPrevOutputTexture[dtID.xy]).rgb;
-    return motionVectorPP;
-
-}
-
-void temporalAccumulation(uint3 dtID)
-{
-    const uint2 PP00 = dtID.xy;
-    float3 inp = gInputTexture[PP00].rgb;
-    gOutputTexture[PP00] = float4(0.2f * inp + 0.8f * ema(dtID), 1.0f);
-    
-}
-
-void updatePrevFrame(uint3 dtID)
-{
-    //prev frame is RW which allows for this
-    gPrevOutputTexture[dtID.xy] = gOutputTexture[dtID.xy];
-}
-
 [numthreads(16, 16, 1)]
 void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
-    //make sure we can actually use the previous frame
-    if (gFrameCount > 0)
-    {
-        //bilateral(dispatchThreadId);
-        temporalAccumulation(dispatchThreadId);
-        //gOutputTexture[dispatchThreadId.xy] = gInputTexture[dispatchThreadId.xy];
-    }
-    
-    updatePrevFrame(dispatchThreadId);
-
+    bilateral(dispatchThreadId);
 }

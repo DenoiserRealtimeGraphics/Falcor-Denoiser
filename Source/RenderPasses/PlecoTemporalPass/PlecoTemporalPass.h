@@ -29,13 +29,12 @@
 #include "Falcor.h"
 #include "FalcorExperimental.h"
 
-
 using namespace Falcor;
 
-class PlecoDenoiser : public RenderPass
+class PlecoTemporalPass : public RenderPass
 {
 public:
-    using SharedPtr = std::shared_ptr<PlecoDenoiser>;
+    using SharedPtr = std::shared_ptr<PlecoTemporalPass>;
 
     /** Create a new render pass object.
         \param[in] pRenderContext The render context.
@@ -55,7 +54,7 @@ public:
     virtual bool onKeyEvent(const KeyboardEvent& keyEvent) override { return false; }
 
 private:
-    PlecoDenoiser(const Dictionary& dict);
+    PlecoTemporalPass(const Dictionary& dict);
 
 private:
     Scene::SharedPtr mpScene;
@@ -66,30 +65,6 @@ private:
     Texture::SharedPtr mpPrevFrame;
 
     uint mFrameCount = 0;
-    float mGaussianSigma = 1;
-    bool mOptionsChanged = true;
-   // uint2 mDimensionsOfFrame = { 0, 0 };
+    // uint2 mDimensionsOfFrame = { 0, 0 };
 
-// Scripting
-#define serialize(var) \
-    if constexpr (!loadFromDict) dict[#var] = var; \
-    else if (dict.keyExists(#var)) { if constexpr (std::is_same<decltype(var), std::string>::value) var = (const std::string &)dict[#var]; else var = dict[#var]; vars.emplace(#var); }
-
-    template<bool loadFromDict, typename DictType>
-    void serializePass(DictType& dict)
-    {
-        std::unordered_set<std::string> vars;
-
-        // Add variables here that should be serialized to/from the dictionary.
-        serialize(mGaussianSigma);
-
-        if constexpr (loadFromDict)
-        {
-            for (const auto& [key, value] : dict)
-            {
-                if (vars.find(key) == vars.end()) logWarning("Unknown field '" + key + "' in a PathTracer dictionary");
-            }
-        }
-    }
-#undef serialize
 };

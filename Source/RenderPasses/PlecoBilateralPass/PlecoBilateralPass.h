@@ -29,13 +29,12 @@
 #include "Falcor.h"
 #include "FalcorExperimental.h"
 
-
 using namespace Falcor;
 
-class PlecoDenoiser : public RenderPass
+class PlecoBilateralPass : public RenderPass
 {
 public:
-    using SharedPtr = std::shared_ptr<PlecoDenoiser>;
+    using SharedPtr = std::shared_ptr<PlecoBilateralPass>;
 
     /** Create a new render pass object.
         \param[in] pRenderContext The render context.
@@ -55,7 +54,7 @@ public:
     virtual bool onKeyEvent(const KeyboardEvent& keyEvent) override { return false; }
 
 private:
-    PlecoDenoiser(const Dictionary& dict);
+    PlecoBilateralPass(const Dictionary& dict);
 
 private:
     Scene::SharedPtr mpScene;
@@ -63,12 +62,11 @@ private:
     ComputeVars::SharedPtr mpVars;
     ComputeState::SharedPtr mpState;
 
-    Texture::SharedPtr mpPrevFrame;
-
     uint mFrameCount = 0;
     float mGaussianSigma = 1;
     bool mOptionsChanged = true;
-   // uint2 mDimensionsOfFrame = { 0, 0 };
+    // uint2 mDimensionsOfFrame = { 0, 0 };
+
 
 // Scripting
 #define serialize(var) \
