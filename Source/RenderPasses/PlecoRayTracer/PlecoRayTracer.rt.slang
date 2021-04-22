@@ -29,8 +29,8 @@ struct SimplePayload
     float3 origin;
     float3 direction;
     uint numBounces;
+    float distance;
     float throughput;
-    float emThroughput;
 
     SampleGenerator sampleGen;
 
@@ -42,8 +42,8 @@ struct SimplePayload
         payload.origin = float3(0, 0, 0);
         payload.direction = float3(0, 0, 0);
         payload.numBounces = 0;
+        payload.distance = 0.f;
         payload.throughput = 1.0f;
-        payload.emThroughput = 1.0f;
         payload.sampleGen = sg;
         return payload;
     }
@@ -114,7 +114,7 @@ void Miss(inout SimplePayload payload)
     if (payload.numBounces > 0)
     {
         float3 envMap = gScene.envMap.eval(payload.direction);
-        payload.color += payload.color * envMap * payload.throughput;
+        //payload.color += payload.color * envMap * payload.throughput;
     }
     // Draw env map background
     else
@@ -160,10 +160,8 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
     const uint materialID = gScene.getMaterialID(hitParams.getGlobalHitID());
     ShadingData shadeData = prepareShadingData(v, materialID, gScene.materials[materialID], gScene.materialResources[materialID], -WorldRayDirection(), 0.f);
 
-    //if(checkLightHit(posW) == false)
-    //{
-    //}
-
+    payload.distance += length(shadeData.posW - payload.origin);
+    
 	// Save out our G-buffer values to the specified output textures
     if(payload.numBounces == 0)
     {
@@ -177,15 +175,41 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         gMatEmis[idx] = float4(shadeData.emissive, 1.f);
     }
 
-    float roughness = shadeData.linearRoughness * shadeData.linearRoughness;
-    float3 diffuse = shadeData.diffuse * shadeData.opacity * payload.throughput;
-    float3 specular = shadeData.specular * roughness * payload.throughput;
-    payload.color += diffuse + specular;
-    payload.color += payload.color * shadeData.emissive * payload.emThroughput;
+    const uint lightCount = gScene.getLightCount();
+    if (lightCount > 0)
+    {
+        // pick one of the light sources randomly
+        const uint lightIndex = min(uint(sampleNext1D(payload.sampleGen) * lightCount), lightCount - 1);
+        // sample light source
+        LightData light = gScene.getLight(lightIndex);
+
+        float3 L = -light.dirW;
+        float3 N = shadeData.N;
+        float3 V = -payload.direction;
+
+        // diffuse
+        float3 baseCol = shadeData.diffuse + shadeData.specular;
+        //float diffuseProduct = clamp(dot(N, L), 0, 1);
+        float diffuseProduct = (dot(N, L) + 1.f) * 0.5f;
+        float3 diffuseCol = baseCol * shadeData.opacity * diffuseProduct;
+
+        // specular
+        float3 R = 2.f * diffuseProduct * N - L;
+        R = normalize(R);
+        float specularProduct = pow(clamp(dot(R, V), 0, 1), 256.f);
+        float3 specularLight = light.intensity * shadeData.linearRoughness * specularProduct;
+        diffuseCol *= (1.f - specularProduct);
+        float3 emissiveLight = shadeData.emissive * diffuseProduct;
+
+        // total
+        float3 col = diffuseCol + specularLight + emissiveLight;
+        col /= payload.distance * payload.distance;
+        payload.color += col;
+        //payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;
+    }
 
     payload.throughput *= 0.5f;
-    payload.emThroughput *= 0.1f;
-    
+
     // new origin
     float3 prevOrigin = payload.origin;
     payload.origin = shadeData.computeNewRayOrigin();
@@ -198,4 +222,3 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
 
     payload.numBounces++;
 }
-
