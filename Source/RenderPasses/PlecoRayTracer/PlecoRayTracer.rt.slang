@@ -202,7 +202,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         float3 emissiveLight = shadeData.emissive * diffuseProduct;
 
         // total
-        float3 col = diffuseCol + specularLight + emissiveLight;
+        float3 col = diffuseCol + specularLight /*+ emissiveLight*/;
         col /= payload.distance * payload.distance;
         payload.color += col;
         //payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;

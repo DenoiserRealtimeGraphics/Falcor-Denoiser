@@ -34,6 +34,7 @@ namespace
 
     const char kShaderFile[] = "RenderPasses/PlecoTemporalPass/Temporal.cs.slang";
     const char kInputChannel[] = "Input_From_PlecoRT";
+    const char kMotionChannel[] = "From_RTBuffer";
     const char kOutputChannel[] = "Output_From_PD";
 }
 
@@ -75,6 +76,7 @@ RenderPassReflection PlecoTemporalPass::reflect(const CompileData& compileData)
     RenderPassReflection reflector;
     reflector.addOutput(kOutputChannel, "Output from Pleco Denoiser").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
     reflector.addInput(kInputChannel, "Input from Pleco Ray Tracer").bindFlags(ResourceBindFlags::ShaderResource);
+    reflector.addInput(kMotionChannel, "Input from RT Buffer").bindFlags(ResourceBindFlags::ShaderResource);
     //addRenderPassInputs(reflector, kInputChannel);
     //addRenderPassInputs(reflector, kOutputChannel);
     return reflector;
@@ -109,6 +111,10 @@ void PlecoTemporalPass::execute(RenderContext* pRenderContext, const RenderData&
     Texture::SharedPtr inputBuffer = renderData[kInputChannel]->asTexture();
     assert(inputBuffer);
 
+    //motion buffer
+    Texture::SharedPtr motionBuffer = renderData[kMotionChannel]->asTexture();
+    assert(motionBuffer);
+
     //output buffer
     Texture::SharedPtr outputBuffer = renderData[kOutputChannel]->asTexture();
     assert(outputBuffer);
@@ -117,6 +123,7 @@ void PlecoTemporalPass::execute(RenderContext* pRenderContext, const RenderData&
     mpVars["CB"]["gFrameCount"] = ++mFrameCount;
     mpVars["gInputTexture"] = inputBuffer;
     mpVars["gOutputTexture"] = outputBuffer;
+    mpVars["gMotionTexture"] = motionBuffer;
 
     //prior frame info
     mpVars["gPrevOutputTexture"] = mpPrevFrame;
