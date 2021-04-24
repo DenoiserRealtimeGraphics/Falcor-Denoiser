@@ -59,8 +59,9 @@ void accumulate(uint3 dispatchThreadId : SV_DispatchThreadID)
     const uint2 pixelPos = dispatchThreadId.xy;
     const float4 curColor = gInputTexture[pixelPos];
     const float4 motionVec = gInputMotionTexture[pixelPos];
-    const float motionMagnitude = clamp(length(motionVec.xyz) * 1000.f, 0.f, 1.f);
-    const float invMotionMagnitude = 1.f - motionMagnitude;
+    const float motionMagnitude = clamp(length(motionVec.xyz) * 100.f, 0, 1);
+    const float colorDifference = clamp(length(gInputTexture[pixelPos].rgb - gPrevOutputTexture[pixelPos].rgb) * 100.f, 0, 1);
+    const float invWeight = 1.f - motionMagnitude * colorDifference;
     
     //const float motionEffect = pow(motionMagnitude, 0.1f);
     //const float inverseMotionEffect = 1.f - motionEffect;
@@ -68,10 +69,10 @@ void accumulate(uint3 dispatchThreadId : SV_DispatchThreadID)
     //gPrevOutputTextureSum[pixelPos] *= inverseMotionEffect;
     //gAccumCountTexture[pixelPos] += inverseMotionEffect;
 
-    gAccumCountTexture[pixelPos] *= invMotionMagnitude;
+    gAccumCountTexture[pixelPos] *= invWeight;
     gAccumCountTexture[pixelPos] += 1;
     
-    float4 sum = gPrevOutputTextureSum[pixelPos] * invMotionMagnitude + curColor;
+    float4 sum = gPrevOutputTextureSum[pixelPos] * invWeight + curColor;
     float4 output = sum / gAccumCountTexture[pixelPos];
     
     gPrevOutputTextureSum[pixelPos] = sum;
