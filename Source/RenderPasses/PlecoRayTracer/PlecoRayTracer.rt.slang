@@ -86,7 +86,7 @@ void RayGen()
         TraceRay(gRtScene, 0, 0xFF, 0, 1, 0, ray, payload);
     }
 
-    gColor[dispatchRaysIndex] = float4(payload.color, 1.0f);
+    gColor[dispatchRaysIndex] = float4(payload.color * 5.f, 1.0f);
 }
 
 // Our miss shader's variables
@@ -202,7 +202,7 @@ void ClosestHit(uniform HitShaderParams hitParams, inout SimplePayload payload, 
         float3 emissiveLight = shadeData.emissive * diffuseProduct;
 
         // total
-        float3 col = diffuseCol + specularLight + emissiveLight;
+        float3 col = diffuseCol + specularLight/* + emissiveLight*/;
         col /= payload.distance * payload.distance;
         payload.color += col;
         //payload.color += (diffuseCol + specularLight + emissiveLight) * payload.throughput;

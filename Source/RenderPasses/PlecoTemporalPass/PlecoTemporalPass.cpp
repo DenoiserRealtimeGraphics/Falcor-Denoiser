@@ -34,7 +34,10 @@ namespace
 
     const char kShaderFile[] = "RenderPasses/PlecoTemporalPass/Temporal.cs.slang";
     const char kInputChannel[] = "Input_From_PlecoRT";
+    const char kInputMotionChannel[] = "InputMotion";
     const char kOutputChannel[] = "Output_From_PD";
+    const char kOutputSumChannel[] = "OutputSum_From_PD";
+    const char kAccumCountChannel[] = "AccumCount";
 }
 
 // Don't remove this. it's required for hot-reload to function properly
@@ -48,9 +51,14 @@ extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary & lib)
     lib.registerClass("PlecoTemporalPass", kDesc, PlecoTemporalPass::create);
 }
 
+void PlecoTemporalPass::onHotReload(HotReloadFlags reloaded)
+{
+    mFrameCount = 0;
+}
+
 PlecoTemporalPass::PlecoTemporalPass(const Dictionary& dict)
 {
-    mpProgram = ComputeProgram::createFromFile(kShaderFile, "temporal", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
+    mpProgram = ComputeProgram::createFromFile(kShaderFile, "accumulate", Program::DefineList(), Shader::CompilerFlags::TreatWarningsAsErrors);
     mpVars = ComputeVars::create(mpProgram->getReflector());
     mpState = ComputeState::create();
 }
@@ -74,7 +82,10 @@ RenderPassReflection PlecoTemporalPass::reflect(const CompileData& compileData)
     // Define the required resources here
     RenderPassReflection reflector;
     reflector.addOutput(kOutputChannel, "Output from Pleco Denoiser").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
+    reflector.addOutput(kOutputSumChannel, "Output Sum from Pleco Denoiser").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
+    reflector.addOutput(kAccumCountChannel, "Accum Count").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
     reflector.addInput(kInputChannel, "Input from Pleco Ray Tracer").bindFlags(ResourceBindFlags::ShaderResource);
+    reflector.addInput(kInputMotionChannel, "Motion Input").bindFlags(ResourceBindFlags::ShaderResource);
     //addRenderPassInputs(reflector, kInputChannel);
     //addRenderPassInputs(reflector, kOutputChannel);
     return reflector;
@@ -109,14 +120,29 @@ void PlecoTemporalPass::execute(RenderContext* pRenderContext, const RenderData&
     Texture::SharedPtr inputBuffer = renderData[kInputChannel]->asTexture();
     assert(inputBuffer);
 
+    //input motion buffer
+    Texture::SharedPtr inputMotionBuffer = renderData[kInputMotionChannel]->asTexture();
+    assert(inputMotionBuffer);
+
     //output buffer
     Texture::SharedPtr outputBuffer = renderData[kOutputChannel]->asTexture();
     assert(outputBuffer);
 
+    //output sum buffer
+    Texture::SharedPtr outputSumBuffer = renderData[kOutputSumChannel]->asTexture();
+    assert(outputSumBuffer);
+
+    //output sum buffer
+    Texture::SharedPtr accumCountBuffer = renderData[kAccumCountChannel]->asTexture();
+    assert(accumCountBuffer);
+
     //assign variables in shader CBs
     mpVars["CB"]["gFrameCount"] = ++mFrameCount;
     mpVars["gInputTexture"] = inputBuffer;
+    mpVars["gInputMotionTexture"] = inputMotionBuffer;
     mpVars["gOutputTexture"] = outputBuffer;
+    mpVars["gPrevOutputTextureSum"] = outputSumBuffer;
+    mpVars["gAccumCountTexture"] = accumCountBuffer;
 
     //prior frame info
     mpVars["gPrevOutputTexture"] = mpPrevFrame;
