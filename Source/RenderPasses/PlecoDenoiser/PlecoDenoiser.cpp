@@ -33,8 +33,11 @@ namespace
     const char kDesc[] = "Insert pass description here";
 
     const char kShaderFile[] = "RenderPasses/PlecoDenoiser/Denoise.cs.slang";
-    const char kInputChannel[] = "Input_From_PlecoRT";
-    const char kOutputChannel[] = "Output_From_PD";
+    const char kInputChannel[] = "Input_Color";
+    const char kInputMotionChannel[] = "Input_MotionVector";
+    const char kOutputChannel[] = "Output_Color";
+    const char kOutputSumChannel[] = "Output_Sum";
+    const char kAccumCountChannel[] = "Accum_Count";
 }
 
 // Don't remove this. it's required for hot-reload to function properly
@@ -75,9 +78,10 @@ RenderPassReflection PlecoDenoiser::reflect(const CompileData& compileData)
     // Define the required resources here
     RenderPassReflection reflector;
     reflector.addOutput(kOutputChannel, "Output from Pleco Denoiser").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
+    reflector.addOutput(kOutputSumChannel, "Output Sum from Pleco Denoiser").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
+    reflector.addOutput(kAccumCountChannel, "Accum Count").bindFlags(ResourceBindFlags::RenderTarget | ResourceBindFlags::UnorderedAccess | ResourceBindFlags::ShaderResource).format(ResourceFormat::RGBA32Float);
     reflector.addInput(kInputChannel, "Input from Pleco Ray Tracer").bindFlags(ResourceBindFlags::ShaderResource);
-    //addRenderPassInputs(reflector, kInputChannel);
-    //addRenderPassInputs(reflector, kOutputChannel);
+    reflector.addInput(kInputMotionChannel, "Motion Input").bindFlags(ResourceBindFlags::ShaderResource);
     return reflector;
 }
 
@@ -118,15 +122,31 @@ void PlecoDenoiser::execute(RenderContext* pRenderContext, const RenderData& ren
     Texture::SharedPtr inputBuffer = renderData[kInputChannel]->asTexture();
     assert(inputBuffer);
 
+    //input motion buffer
+    Texture::SharedPtr inputMotionBuffer = renderData[kInputMotionChannel]->asTexture();
+    assert(inputMotionBuffer);
+
     //output buffer
     Texture::SharedPtr outputBuffer = renderData[kOutputChannel]->asTexture();
     assert(outputBuffer);
 
+    //output sum buffer
+    Texture::SharedPtr outputSumBuffer = renderData[kOutputSumChannel]->asTexture();
+    assert(outputSumBuffer);
+
+    //output sum buffer
+    Texture::SharedPtr accumCountBuffer = renderData[kAccumCountChannel]->asTexture();
+    assert(accumCountBuffer);
+
     //assign variables in shader CBs
     mpVars["CB"]["gFrameCount"] = ++mFrameCount;
-    mpVars["gInputTexture"] = inputBuffer;
-    mpVars["gOutputTexture"] = outputBuffer;
 
+    //bind textures
+    mpVars["gInputTexture"] = inputBuffer;
+    mpVars["gInputMotionTexture"] = inputMotionBuffer;
+    mpVars["gOutputTexture"] = outputBuffer;
+    mpVars["gPrevOutputTextureSum"] = outputSumBuffer;
+    mpVars["gAccumCountTexture"] = accumCountBuffer;
     //prior frame info
     mpVars["gPrevOutputTexture"] = mpPrevFrame;
 
