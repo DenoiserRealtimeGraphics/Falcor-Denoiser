@@ -36,7 +36,7 @@ void denoise(uint3 dispatchThreadId : SV_DispatchThreadID)
 
     // weights of motion magnitude and color different magnitude (like bilateral)
     const float motionMagnitude = clamp(length(motionVec.xyz) * 100.f, 0, 1);
-    const float colorDifference = clamp(length(gInputTexture[pixelPos].rgb - gPrevOutputTexture[pixelPos].rgb) * 100.f, 0, 1);
+    const float colorDifference = clamp(length(gInputTexture[pixelPos].rgb - gPrevOutputTexture[pixelPos].rgb) * 200.f, 0, 1);
     const float invWeight = 1.f - motionMagnitude * colorDifference;
 
     // scale down all prior texture sum by inverse weight and add current output
